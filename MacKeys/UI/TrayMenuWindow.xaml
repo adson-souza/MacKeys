@@ -1,0 +1,59 @@
+<Window x:Class="MacKeys.UI.TrayMenuWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource MacWindow}"
+        Title="MacKeys" Width="306" SizeToContent="Height"
+        ShowInTaskbar="False" Topmost="True" Deactivated="Window_Deactivated">
+    <Window.Resources>
+        <Style x:Key="MenuSeparator" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="10,5" />
+            <Setter Property="Background" Value="{DynamicResource Separator}" />
+        </Style>
+    </Window.Resources>
+
+    <ContentControl Style="{StaticResource MacFrame}" Background="{DynamicResource Bg.Menu}">
+        <StackPanel Margin="6">
+            <Grid Margin="10,8,10,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Image x:Name="AppIconImage" Width="34" Height="34" Margin="0,0,10,0" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="0,0,10,0">
+                    <TextBlock Text="MacKeys" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock x:Name="StatusText" Style="{StaticResource Secondary}" />
+                </StackPanel>
+                <CheckBox x:Name="EnabledSwitch" Grid.Column="2" Style="{StaticResource MacSwitch}"
+                          Click="EnabledSwitch_Click" />
+            </Grid>
+
+            <Border Style="{StaticResource MenuSeparator}" />
+
+            <Button Style="{StaticResource MenuRow}" Click="Settings_Click">
+                <Grid>
+                    <TextBlock Text="Configurações…" />
+                </Grid>
+            </Button>
+            <Button Style="{StaticResource MenuRow}" Click="Shortcuts_Click">
+                <TextBlock Text="Ver atalhos" />
+            </Button>
+            <Button Style="{StaticResource MenuRow}" Click="Apps_Click">
+                <TextBlock Text="Perfis dos apps" />
+            </Button>
+
+            <Border Style="{StaticResource MenuSeparator}" />
+
+            <Button Style="{StaticResource MenuRow}" Click="Unstick_Click">
+                <TextBlock Text="Destravar teclas" />
+            </Button>
+
+            <Border Style="{StaticResource MenuSeparator}" />
+
+            <Button Style="{StaticResource MenuRow}" Click="Quit_Click">
+                <TextBlock Text="Sair do MacKeys" />
+            </Button>
+        </StackPanel>
+    </ContentControl>
+</Window>

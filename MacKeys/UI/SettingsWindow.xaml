@@ -1,0 +1,229 @@
+<Window x:Class="MacKeys.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="clr-namespace:MacKeys.UI"
+        Style="{StaticResource MacWindow}"
+        Title="MacKeys" Width="820" Height="600"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <!-- Colored rounded squares with a white glyph, like macOS System Settings. -->
+        <Style x:Key="NavIcon" TargetType="Border">
+            <Setter Property="Width" Value="22" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+        </Style>
+        <Style x:Key="NavGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe Fluent Icons, Segoe MDL2 Assets" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="RowTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+        </Style>
+    </Window.Resources>
+
+    <ContentControl Style="{StaticResource MacFrame}">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="210" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <!-- ───────── Sidebar ───────── -->
+            <Border CornerRadius="12,0,0,12" Background="{DynamicResource Bg.Sidebar}"
+                    MouseLeftButtonDown="Drag">
+                <DockPanel Margin="12,16,12,12">
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6,0,0,24">
+                        <Button Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Close}"
+                                Content="×" ToolTip="Fechar" Click="Close_Click" />
+                        <Button Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Minimize}"
+                                Content="−" ToolTip="Minimizar" Click="Minimize_Click" />
+                        <Button Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Idle}"
+                                IsHitTestVisible="False" />
+                    </StackPanel>
+
+                    <ListBox x:Name="Nav" Background="Transparent" BorderThickness="0" Padding="0"
+                             ItemContainerStyle="{StaticResource SidebarItem}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             SelectionChanged="Nav_SelectionChanged">
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource NavIcon}" Background="#8E8E93">
+                                    <TextBlock Style="{StaticResource NavGlyph}" Text="&#xE713;" />
+                                </Border>
+                                <TextBlock Text="Geral" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource NavIcon}" Background="#FF9500">
+                                    <TextBlock Style="{StaticResource NavGlyph}" FontFamily="{StaticResource MacFont}"
+                                               FontSize="14" Text="⌘" Margin="0,-1,0,0" />
+                                </Border>
+                                <TextBlock Text="Atalhos" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource NavIcon}" Background="#AF52DE">
+                                    <TextBlock Style="{StaticResource NavGlyph}" Text="&#xE71D;" />
+                                </Border>
+                                <TextBlock Text="Apps" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource NavIcon}" Background="#34C759">
+                                    <TextBlock Style="{StaticResource NavGlyph}" Text="&#xE946;" />
+                                </Border>
+                                <TextBlock Text="Sobre" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- ───────── Content ───────── -->
+            <Grid Grid.Column="1">
+                <Border Height="56" VerticalAlignment="Top" Background="Transparent" MouseLeftButtonDown="Drag">
+                    <TextBlock x:Name="PageTitle" Text="Geral" FontSize="15" FontWeight="SemiBold"
+                               VerticalAlignment="Center" Margin="28,0,0,0" />
+                </Border>
+
+                <ScrollViewer x:Name="Scroller" Margin="0,56,0,12" VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="28,0,28,16">
+
+                        <!-- Geral -->
+                        <StackPanel x:Name="PageGeneral">
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="MacKeys ativo" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Pause para usar o teclado normal do Windows." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="EnabledSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="EnabledSwitch_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Iniciar com o Windows" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Abre sozinho quando você entra no computador." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="StartupSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="StartupSwitch_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,16,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Cola de atalhos" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Segure ⌘ por um segundo para ver os atalhos do app aberto." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="CheatSheetSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="CheatSheetSwitch_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="⌘ Espaço abre" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Como o Spotlight do Mac." />
+                                        </StackPanel>
+                                        <ComboBox x:Name="SearchTargetCombo" Style="{StaticResource MacCombo}" MinWidth="180"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  SelectionChanged="SearchTargetCombo_SelectionChanged">
+                                            <ComboBoxItem Content="Paleta de Comandos" />
+                                            <ComboBoxItem Content="Pesquisa do Windows" />
+                                        </ComboBox>
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,56,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Tecla Win como ⌥ (Option)" />
+                                            <TextBlock Style="{StaticResource Secondary}"
+                                                       Text="Desligado: a tecla Win continua do Windows (encaixar janelas, Iniciar...) e só Win + clique vira Alt. Ligado: Win vira o ⌥ do Mac completo, mas os atalhos de janela do Windows deixam de funcionar." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="WinOptionSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="WinOptionSwitch_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Seu teclado" />
+                            <Border Style="{StaticResource Card}" Padding="16,18,16,14">
+                                <StackPanel>
+                                    <ui:KeyboardDiagram />
+                                    <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" Margin="0,12,0,0"
+                                               Text="Alt e Win da esquerda viram ⌘ e ⌥. O AltGr da direita continua igual, para os acentos e símbolos do ABNT2." />
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                                <Button Style="{StaticResource MacButton}" Content="Destravar teclas" Margin="0,0,8,0"
+                                        ToolTip="Solta qualquer tecla modificadora que tenha ficado presa"
+                                        Click="Unstick_Click" />
+                                <Button Style="{StaticResource MacButton}" Content="Rever boas-vindas" Click="Onboarding_Click" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- Atalhos -->
+                        <StackPanel x:Name="PageShortcuts" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,0"
+                                       Text="Desligue um atalho para que ele volte a ser apenas ⌘ = Ctrl (por exemplo, ⌘Q vira Ctrl+Q)." />
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Sempre ligado" />
+                            <Border Style="{StaticResource Card}">
+                                <Grid Margin="14,11">
+                                    <StackPanel Orientation="Horizontal">
+                                        <ui:KeyCaps Keys="⌘ + letra" Width="150" />
+                                        <TextBlock Style="{StaticResource RowTitle}" VerticalAlignment="Center"
+                                                   Text="Ctrl + letra: copiar, colar, desfazer, salvar…" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <StackPanel x:Name="ShortcutGroups" />
+                        </StackPanel>
+
+                        <!-- Apps -->
+                        <StackPanel x:Name="PageApps" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,0"
+                                       Text="Cada app usa um perfil. Os que não estão na lista usam o perfil Padrão." />
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Seus apps" />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel x:Name="AppRows" />
+                            </Border>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Style="{StaticResource MacButton}" Content="+ Adicionar app…" Click="AddApp_Click" />
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Perfis" />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel x:Name="ProfileLegend" />
+                            </Border>
+                        </StackPanel>
+
+                        <!-- Sobre -->
+                        <StackPanel x:Name="PageAbout" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,30,0,0">
+                            <Image x:Name="AboutIcon" Width="112" Height="112" />
+                            <TextBlock Text="MacKeys" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,14,0,0" />
+                            <TextBlock x:Name="VersionText" Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="380" Margin="0,18,0,0"
+                                       Text="Para quem veio do Mac e não quer desaprender: seus atalhos de sempre, no teclado do Windows." />
+                            <TextBlock Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,22,0,0"
+                                       Text="Desenvolvido por" />
+                            <TextBlock Text="Adson Pereira de Souza" FontSize="14" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" Margin="0,2,0,0" />
+                            <Button Style="{StaticResource MacButton}" Content="Mostrar arquivo de configurações"
+                                    HorizontalAlignment="Center" Margin="0,24,0,0" Click="OpenFolder_Click" />
+                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="360" Margin="0,8,0,0"
+                                       Text="Copie o settings.json para fazer backup ou levar seus perfis e atalhos para outro computador." />
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </ContentControl>
+</Window>
