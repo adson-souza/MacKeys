@@ -13,6 +13,7 @@ public partial class AddAppWindow : Window
     public AddAppWindow()
     {
         InitializeComponent();
+        L.Translate(this);
         foreach (var app in AppCatalog.RunningApps())
         {
             var icon = SettingsWindow.AppIconView(app.Exe, app.Name, 22);
@@ -47,8 +48,8 @@ public partial class AddAppWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Escolha o programa",
-            Filter = "Programas (*.exe)|*.exe",
+            Title = L.T("Escolha o programa"),
+            Filter = L.T("Programas (*.exe)|*.exe"),
             InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
         };
         if (dialog.ShowDialog(this) != true) return;

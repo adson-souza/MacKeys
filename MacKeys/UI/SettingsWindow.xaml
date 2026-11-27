@@ -77,6 +77,14 @@
                         </ListBoxItem>
                         <ListBoxItem>
                             <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource NavIcon}" Background="#0A84FF">
+                                    <TextBlock Style="{StaticResource NavGlyph}" Text="&#xE7B3;" />
+                                </Border>
+                                <TextBlock Text="Quick Look" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </ListBoxItem>
+                        <ListBoxItem>
+                            <StackPanel Orientation="Horizontal">
                                 <Border Style="{StaticResource NavIcon}" Background="#34C759">
                                     <TextBlock Style="{StaticResource NavGlyph}" Text="&#xE946;" />
                                 </Border>
@@ -142,6 +150,20 @@
                                     </Grid>
                                     <Border Style="{StaticResource RowSeparator}" />
                                     <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Idioma" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Automático segue o idioma do Windows: português do Brasil ou inglês." />
+                                        </StackPanel>
+                                        <ComboBox x:Name="LanguageCombo" Style="{StaticResource MacCombo}" MinWidth="230"
+                                                  HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                  SelectionChanged="LanguageCombo_SelectionChanged">
+                                            <ComboBoxItem Content="Automático" />
+                                            <ComboBoxItem Content="Português (Brasil)" />
+                                            <ComboBoxItem Content="English" />
+                                        </ComboBox>
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
                                         <StackPanel Margin="0,0,56,0">
                                             <TextBlock Style="{StaticResource RowTitle}" Text="Tecla Win como ⌥ (Option)" />
                                             <TextBlock Style="{StaticResource Secondary}"
@@ -199,27 +221,179 @@
                                 <Button Style="{StaticResource MacButton}" Content="+ Adicionar app…" Click="AddApp_Click" />
                             </StackPanel>
 
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Botão do meio normal nestes apps" />
+                            <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,8"
+                                       Text="Nos outros apps, um clique rápido com o botão do meio mostra todas as janelas (Visão de Tarefas)." />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel x:Name="MiddleClickRows" />
+                            </Border>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                                <Button Style="{StaticResource MacButton}" Content="+ Adicionar app…" Click="AddMiddleClickApp_Click" />
+                            </StackPanel>
+
                             <TextBlock Style="{StaticResource GroupHeader}" Text="Perfis" />
                             <Border Style="{StaticResource Card}">
                                 <StackPanel x:Name="ProfileLegend" />
                             </Border>
                         </StackPanel>
 
+                        <!-- Quick Look -->
+                        <StackPanel x:Name="PageQuickLook" Visibility="Collapsed">
+                            <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,0"
+                                       Text="Selecione um arquivo no Explorador e aperte Espaço, como no Finder. Espaço ou Esc fecham, as setas trocam de arquivo e Enter abre." />
+                            <Border Style="{StaticResource Card}" Margin="0,14,0,0">
+                                <StackPanel>
+                                    <Grid Margin="14,11">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border Width="28" Height="28" CornerRadius="7" Background="#0A84FF" Margin="0,0,12,0"
+                                                VerticalAlignment="Center">
+                                            <TextBlock Style="{StaticResource NavGlyph}" FontSize="14" Text="&#xE7B3;" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="0,0,16,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Pré-visualizar com Espaço" />
+                                            <TextBlock x:Name="QuickLookSummary" Style="{StaticResource Secondary}" />
+                                        </StackPanel>
+                                        <CheckBox x:Name="QuickLookSwitch" Grid.Column="2" Style="{StaticResource MacSwitch}"
+                                                  Click="QuickLookSwitch_Click" />
+                                    </Grid>
+                                    <Border x:Name="QuickLookInstallSeparator" Style="{StaticResource RowSeparator}" />
+                                    <Grid x:Name="QuickLookInstallRow" Margin="14,11">
+                                        <TextBlock x:Name="QuickLookStatus" Style="{StaticResource Secondary}" Margin="40,0,190,0"
+                                                   VerticalAlignment="Center" />
+                                        <Button x:Name="QuickLookInstallButton" Style="{StaticResource MacButton}"
+                                                HorizontalAlignment="Right" Click="QuickLookInstall_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <StackPanel x:Name="QuickLookOptions">
+                                <TextBlock Style="{StaticResource GroupHeader}" Text="Janela de pré-visualização" />
+                                <Border Style="{StaticResource Card}">
+                                    <StackPanel x:Name="QuickLookOptionRows" />
+                                </Border>
+
+                                <TextBlock Style="{StaticResource GroupHeader}" Text="Plugins" />
+                                <Border Style="{StaticResource Card}">
+                                    <Grid Margin="14,11">
+                                        <TextBlock Style="{StaticResource Secondary}" Margin="0,0,230,0" VerticalAlignment="Center"
+                                                   Text="Plugins abrem mais tipos de arquivo. Para instalar um, baixe o arquivo .qlplugin e aperte Espaço nele." />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource MacButton}" Content="Ver plugins…" Margin="0,0,8,0"
+                                                    Click="QuickLookPlugins_Click" />
+                                            <Button Style="{StaticResource MacButton}" Content="Abrir pasta" Click="QuickLookData_Click"
+                                                    ToolTip="Pasta de dados do QuickLook: configurações e plugins instalados" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
+                                    <Button x:Name="QuickLookRestartButton" Style="{StaticResource MacButton}" Content="Reiniciar o QuickLook"
+                                            ToolTip="Fecha e abre o QuickLook de novo (depois de instalar um plugin, ou se ele não responder)"
+                                            Click="QuickLookRestart_Click" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <TextBlock Style="{StaticResource Secondary}" Margin="2,22,0,0">
+                                <Run Text="O Quick Look do MacKeys é o" />
+                                <Hyperlink Foreground="{DynamicResource Accent}" Click="QuickLookProject_Click">QuickLook</Hyperlink><Run Text=", de Paddy Xu e dos colaboradores do QL-Win, software livre sob a" />
+                                <Hyperlink Foreground="{DynamicResource Accent}" Click="QuickLookLicense_Click">GPL-3.0</Hyperlink><Run Text="." />
+                            </TextBlock>
+                        </StackPanel>
+
                         <!-- Sobre -->
-                        <StackPanel x:Name="PageAbout" Visibility="Collapsed" HorizontalAlignment="Center" Margin="0,30,0,0">
-                            <Image x:Name="AboutIcon" Width="112" Height="112" />
-                            <TextBlock Text="MacKeys" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,14,0,0" />
+                        <StackPanel x:Name="PageAbout" Visibility="Collapsed" Margin="0,18,0,0">
+                            <Image x:Name="AboutIcon" Width="104" Height="104" HorizontalAlignment="Center" />
+                            <TextBlock Text="MacKeys" FontSize="24" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,12,0,0" />
                             <TextBlock x:Name="VersionText" Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="380" Margin="0,18,0,0"
+                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="380" Margin="0,14,0,0"
                                        Text="Para quem veio do Mac e não quer desaprender: seus atalhos de sempre, no teclado do Windows." />
-                            <TextBlock Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,22,0,0"
+                            <TextBlock Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,16,0,0"
                                        Text="Desenvolvido por" />
                             <TextBlock Text="Adson Pereira de Souza" FontSize="14" FontWeight="SemiBold"
                                        HorizontalAlignment="Center" Margin="0,2,0,0" />
-                            <Button Style="{StaticResource MacButton}" Content="Mostrar arquivo de configurações"
-                                    HorizontalAlignment="Center" Margin="0,24,0,0" Click="OpenFolder_Click" />
-                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="360" Margin="0,8,0,0"
-                                       Text="Copie o settings.json para fazer backup ou levar seus perfis e atalhos para outro computador." />
+
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Atualizações" Margin="10,24,0,6" />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0" VerticalAlignment="Center">
+                                            <TextBlock x:Name="UpdateTitle" Style="{StaticResource RowTitle}" Text="O MacKeys está atualizado" />
+                                            <TextBlock x:Name="UpdateDetail" Style="{StaticResource Secondary}" />
+                                        </StackPanel>
+                                        <Button x:Name="UpdateButton" Style="{StaticResource MacButton}" Content="Procurar agora"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center" Click="Update_Click" />
+                                    </Grid>
+                                    <Border x:Name="UpdateNotesSeparator" Style="{StaticResource RowSeparator}" Visibility="Collapsed" />
+                                    <StackPanel x:Name="UpdateNotesPanel" Margin="14,10,14,12" Visibility="Collapsed">
+                                        <TextBlock Style="{StaticResource Secondary}" FontWeight="SemiBold" Text="O que há de novo" />
+                                        <TextBlock x:Name="UpdateNotes" Style="{StaticResource Secondary}" Margin="0,4,0,0" />
+                                        <Button Style="{StaticResource MacButton}" Content="Ver no GitHub" HorizontalAlignment="Left"
+                                                Margin="0,10,0,0" Click="UpdatePage_Click" />
+                                    </StackPanel>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,56,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Procurar atualizações automaticamente" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Do MacKeys e do QuickLook, uma vez por dia. Só avisa: você escolhe a hora de instalar." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="AutoUpdateSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="AutoUpdateSwitch_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,56,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Incluir versões de teste" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Receba as novidades antes, em versões ainda em teste." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="PrereleaseSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="PrereleaseSwitch_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Style="{StaticResource GroupHeader}" Text="Ajuda" Margin="10,18,0,6" />
+                            <Border Style="{StaticResource Card}">
+                                <StackPanel>
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Relatar um problema ou sugerir algo" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Você revisa o relatório antes de enviar." />
+                                        </StackPanel>
+                                        <Button Style="{StaticResource MacButton}" Content="Relatar…" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center" Click="Report_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Testar o teclado" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Autoteste de uns 15 segundos: não use o teclado nem o mouse enquanto ele roda. No fim, abre um relatório em que todas as linhas devem dizer OK." />
+                                        </StackPanel>
+                                        <Button Style="{StaticResource MacButton}" Content="Testar…" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center" Click="SelfTest_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,200,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Arquivo de configurações" />
+                                            <TextBlock Style="{StaticResource Secondary}" Text="Copie o settings.json para fazer backup ou levar seus perfis e atalhos para outro computador." />
+                                        </StackPanel>
+                                        <Button Style="{StaticResource MacButton}" Content="Mostrar" HorizontalAlignment="Right"
+                                                VerticalAlignment="Center" Click="OpenFolder_Click" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- Credits -->
+                            <TextBlock Style="{StaticResource Secondary}" HorizontalAlignment="Center" Margin="0,24,0,0"
+                                       Text="Quick Look" FontWeight="SemiBold" />
+                            <TextBlock Style="{StaticResource Secondary}" TextAlignment="Center" MaxWidth="420" Margin="0,4,0,0">
+                                <Hyperlink Foreground="{DynamicResource Accent}" Click="QuickLookProject_Click">QuickLook</Hyperlink><Run Text=", criado por Paddy Xu e mantido pelos colaboradores do QL-Win. Software livre sob a licença" />
+                                <Hyperlink Foreground="{DynamicResource Accent}" Click="QuickLookLicense_Click">GPL-3.0</Hyperlink><Run Text=", usado sem modificações." />
+                            </TextBlock>
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>

@@ -1,6 +1,5 @@
 using System.Windows;
 using System.Windows.Threading;
-using MacKeys.QuickLook;
 using MacKeys.UI;
 using Microsoft.Win32;
 
@@ -26,13 +25,13 @@ public partial class App : Application
     private SettingsWindow? _settingsWindow;
     private OnboardingWindow? _onboarding;
     private CheatSheetWindow? _cheatSheet;
-    private QuickLookController? _quickLook;
     private readonly DispatcherTimer _cheatSheetTimer = new() { Interval = TimeSpan.FromMilliseconds(900) };
     private (string App, Profile Profile) _pendingCheatSheet;
 
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        L.Apply(MacKeys.Settings.SavedLanguage());
 
         if (e.Args is ["--raw-helper", var hwnd, var parent, ..] && long.TryParse(hwnd, out long target)
             && int.TryParse(parent, out int parentPid))
@@ -47,43 +46,99 @@ public partial class App : Application
             return;
         }
 
-        if (e.Args is ["--preview-test", var file, var output])
+        if (e.Args is ["--install-quicklook"])
         {
-            // Shows the real Quick Look window for a file, then captures it from the screen (including
-            // native preview handlers, which an off-screen render can't see) and exits.
-            Settings = new Settings();
-            Theme.Apply(Resources);
-            var preview = new PreviewWindow();
-            preview.ShowFor(IntPtr.Zero, new List<string> { file });
-            var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
-            timer.Tick += (_, _) =>
-            {
-                timer.Stop();
-                preview.CaptureTo(output);
-                File.WriteAllText(output + ".txt",
-                    $"handler: {PreviewHandlerHost.LastError ?? "ok"} ({PreviewHandlerHost.Diagnostics})\n" +
-                    $"janelas: {preview.DescribeHandler()}\npdf: {PdfView.LastError ?? "ok"}");
-                preview.Close();
-                Shutdown();
-            };
-            timer.Start();
-            return;
-        }
-
-        if (e.Args is ["--selftest", var report])
-        {
-            Settings = new Settings(); // in memory only
-            Theme.Apply(Resources);
+            // Downloads QuickLook into the install folder without any window (same as the button in Settings).
             Dispatcher.BeginInvoke(async () =>
             {
-                await SelfTest.RunAsync(report);
+                try
+                {
+                    await QuickLookCompanion.InstallAsync(new Progress<(string, double)>());
+                    Installer.Log("QuickLook " + QuickLookCompanion.InstalledVersion + " instalado");
+                }
+                catch (Exception ex) { Installer.Log($"QuickLook falhou: {ex}"); }
                 Shutdown();
             });
             return;
         }
 
-        if (e.Args is ["--screenshots", var folder])
+        if (e.Args is ["--uninstall", ..])
         {
+            // From Settings › Apps › Installed apps. The installed copy hands over to a temporary one first.
+            if (Installer.HandOverUninstall())
+            {
+                Shutdown();
+                return;
+            }
+            if (e.Args.Contains("--silent"))
+            {
+                // No window, settings kept. For scripts and tests (run from a copy outside the install folder).
+                Dispatcher.BeginInvoke(async () =>
+                {
+                    try { await Installer.UninstallAsync(removeSettings: false, new Progress<(string, double)>()); }
+                    catch (Exception ex) { Installer.Log($"Falhou: {ex}"); }
+                    Shutdown();
+                });
+                return;
+            }
+            Theme.Apply(Resources);
+            new SetupWindow(uninstall: true).Show();
+            return;
+        }
+
+        if (Installer.ShouldRunInstaller(e.Args))
+        {
+            if (e.Args.Contains("--silent"))
+            {
+                // No window: keeps the current choices and never touches PowerToys. For scripts and tests.
+                Dispatcher.BeginInvoke(async () =>
+                {
+                    try
+                    {
+                        bool quickLook = Settings.Load().IsOn(ShortcutId.QuickLook);
+                        await Installer.InstallAsync(new Installer.Options(QuickLook: quickLook,
+                            StartWithWindows: MacKeys.Startup.HasEntry, StartMenu: true, RemovePowerToysRemaps: false,
+                            DisablePeek: false, UseQuickLook: quickLook), new Progress<(string, double)>());
+                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Installer.InstalledExe)
+                            { UseShellExecute = true, WorkingDirectory = Installer.InstallDir });
+                    }
+                    catch (Exception ex) { Installer.Log($"Falhou: {ex}"); }
+                    Shutdown();
+                });
+                return;
+            }
+
+            // The release file is MacKeys itself: run from outside the install folder, it installs.
+            Theme.Apply(Resources);
+            new SetupWindow(uninstall: false).Show();
+            return;
+        }
+
+        if (e.Args is ["--selftest", var report, ..])
+        {
+            // "--after <pid>": started from Settings › Sobre, which quits first so its hook is out of the way;
+            // shows the report and reopens MacKeys at the end.
+            int afterPid = e.Args is [_, _, "--after", var pidText] && int.TryParse(pidText, out int pid) ? pid : 0;
+            Settings = new Settings(); // in memory only
+            Theme.Apply(Resources);
+            Dispatcher.BeginInvoke(async () =>
+            {
+                if (afterPid != 0) await Task.Run(() => WaitForExit(afterPid));
+                await SelfTest.RunAsync(report);
+                if (afterPid != 0)
+                {
+                    System.Diagnostics.Process.Start("notepad.exe", $"\"{report}\"");
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!)
+                        { UseShellExecute = false });
+                }
+                Shutdown();
+            });
+            return;
+        }
+
+        if (e.Args is ["--screenshots", var folder, ..])
+        {
+            if (e.Args.Length > 2) L.Apply(e.Args[2] == "en" ? AppLanguage.English : AppLanguage.Portuguese);
             Settings = new Settings(); // in memory only
             ScreenshotMode.Run(this, folder);
             Shutdown();
@@ -109,10 +164,11 @@ public partial class App : Application
         Mapper.CommandInElevatedWindow += hwnd => Dispatcher.BeginInvoke(() => ShowElevatedNotice(hwnd));
         _cheatSheetTimer.Tick += (_, _) => ShowCheatSheet();
 
-        _quickLook = new QuickLookController(Dispatcher);
-        Mapper.PlainKeyFilter = _quickLook.OnKey;
-
-        Settings.Saved += () => Mapper.UpdateConfig(Settings.Snapshot());
+        Settings.Saved += () =>
+        {
+            Mapper.UpdateConfig(Settings.Snapshot());
+            SyncQuickLook();
+        };
         Mapper.Start();
         Mapper.SetEnabled(Settings.Enabled);
 
@@ -131,7 +187,115 @@ public partial class App : Application
         // Follow light/dark changes live.
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
+        SyncQuickLook();
         if (!Settings.OnboardingDone) ShowOnboarding();
+
+        // Unexpected errors are kept for "Relatar um problema"; the UI ones don't take the app down.
+        DispatcherUnhandledException += (_, args) =>
+        {
+            BugReport.SaveCrash(args.Exception, "interface");
+            args.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            BugReport.SaveCrash(args.ExceptionObject as Exception ?? new Exception("?"), "processo");
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            BugReport.SaveCrash(args.Exception, "tarefa");
+            args.SetObserved();
+        };
+        if (BugReport.PendingCrashFile != null)
+        {
+            _hint ??= new HintWindow();
+            _hint.ShowHint(L.T("O MacKeys encontrou um erro da última vez"),
+                L.T("Se quiser, conte o que aconteceu em “Relatar um problema…”, no menu do ⌘."));
+        }
+
+        // Updates: a first look shortly after starting, then once a day.
+        UpdateChecker.Checked += OnUpdatesChecked;
+        _updateTimer.Tick += (_, _) =>
+        {
+            _updateTimer.Interval = TimeSpan.FromHours(24);
+            if (Settings.CheckForUpdates) _ = CheckForUpdatesAsync();
+        };
+        _updateTimer.Start();
+    }
+
+    // ───────────── updates ─────────────
+
+    private readonly DispatcherTimer _updateTimer = new() { Interval = TimeSpan.FromSeconds(30) };
+
+    /// <summary>Raised on the UI thread when an update check finishes, so menus and settings can refresh.</summary>
+    internal event Action? UpdatesChanged;
+
+    internal Task CheckForUpdatesAsync() => UpdateChecker.CheckAsync(Settings.IncludePrereleases);
+
+    private void OnUpdatesChecked()
+    {
+        Dispatcher.BeginInvoke(() =>
+        {
+            UpdatesChanged?.Invoke();
+            if (UpdateChecker.MacKeysUpdate is { } update && Settings.AnnouncedUpdate != update.Version)
+            {
+                Settings.AnnouncedUpdate = update.Version;
+                Settings.Save();
+                _hint ??= new HintWindow();
+                _hint.ShowHint(L.F("MacKeys {0} disponível", update.Version), L.T("Clique no ⌘ perto do relógio para atualizar."));
+            }
+        });
+    }
+
+    /// <summary>Downloads and runs the new installer; it closes this copy and opens the new one.</summary>
+    internal async Task InstallUpdateAsync(IProgress<string> progress)
+    {
+        if (UpdateChecker.MacKeysUpdate is not { } update) return;
+        await UpdateChecker.InstallMacKeysAsync(update, progress);
+        Quit();
+    }
+
+    /// <summary>After the language changes: windows are rebuilt in the new language.</summary>
+    internal void ReloadLanguage()
+    {
+        L.Apply(Settings.Language);
+        _menu?.Close();
+        _menu = null;
+        _cheatSheet?.Close();
+        _cheatSheet = null;
+        _hint?.Close();
+        _hint = null;
+        _report?.Close();
+        bool onboarding = _onboarding != null;
+        _onboarding?.Close();
+        if (_settingsWindow != null)
+        {
+            var page = _settingsWindow.CurrentPage;
+            _settingsWindow.Close();
+            ShowSettings(page);
+        }
+        if (onboarding) ShowOnboarding();
+    }
+
+    internal void ShowReport()
+    {
+        if (_report == null)
+        {
+            _report = new ReportWindow();
+            _report.Closed += (_, _) => _report = null;
+        }
+        _report.Show();
+        _report.Activate();
+    }
+
+    private ReportWindow? _report;
+
+    private bool? _quickLookWanted;
+
+    /// <summary>QuickLook (QL-Win) runs while MacKeys runs and its Quick Look setting is on.</summary>
+    internal void SyncQuickLook(bool force = false)
+    {
+        bool wanted = Settings.IsOn(ShortcutId.QuickLook);
+        if (!force && _quickLookWanted == wanted) return;
+        _quickLookWanted = wanted;
+        Task.Run(() => QuickLookCompanion.Sync(wanted));
     }
 
     private HintWindow? _hint;
@@ -142,8 +306,8 @@ public partial class App : Application
     {
         if (!_elevatedWindowsNoticed.Add(window)) return;
         _hint ??= new HintWindow();
-        _hint.ShowHint("⌘ não funciona em janelas de administrador",
-            "O Windows bloqueia o MacKeys aqui. Use o Ctrl do teclado nesta janela.");
+        _hint.ShowHint(L.T("⌘ não funciona em janelas de administrador"),
+            L.T("O Windows bloqueia o MacKeys aqui. Use o Ctrl do teclado nesta janela."));
     }
 
     private void OnSessionSwitch(object? sender, SessionSwitchEventArgs e) => Mapper.Reset();
@@ -175,10 +339,31 @@ public partial class App : Application
         EnabledChanged?.Invoke();
     }
 
+    private static void WaitForExit(int pid)
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById(pid);
+            process.WaitForExit(10_000);
+        }
+        catch (ArgumentException) { /* already gone */ }
+    }
+
+    /// <summary>Quits and runs the keyboard self-test in a fresh process, which reopens MacKeys afterwards.</summary>
+    internal void RunSelfTest()
+    {
+        string report = Path.Combine(Path.GetTempPath(), "MacKeys-autoteste.txt");
+        var info = new System.Diagnostics.ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+        foreach (string arg in new[] { "--selftest", report, "--after", Environment.ProcessId.ToString() })
+            info.ArgumentList.Add(arg);
+        System.Diagnostics.Process.Start(info);
+        Quit();
+    }
+
     internal void Quit()
     {
-        _quickLook?.Close();
         _cheatSheet?.Close();
+        QuickLookCompanion.Stop();
         Shutdown();
     }
 

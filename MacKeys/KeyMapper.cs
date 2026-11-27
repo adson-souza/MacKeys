@@ -47,8 +47,6 @@ internal sealed class KeyMapper : IDisposable
     private bool _winNative;     // Win passed through untouched (default mode)
     private bool _winConverted;  // ...until we released it and pressed Alt instead (Win+click, Win+key in Adobe apps)
 
-    private Keys? _filterHeld; // key swallowed by the plain-key filter, until it's released
-    private long _filterHeldAt;
     private long _cmdDownAt, _optDownAt;
     private string _foregroundApp = "";
 
@@ -75,12 +73,6 @@ internal sealed class KeyMapper : IDisposable
     public event Action<IntPtr>? CommandInElevatedWindow;
 
     private bool _foregroundElevated;
-
-    /// <summary>
-    /// Sees plain key presses (no modifiers held) before they reach the app; returning true swallows the key.
-    /// Used by Quick Look for Space/Esc in File Explorer. Called on the keyboard thread: must be quick.
-    /// </summary>
-    public Func<Keys, bool>? PlainKeyFilter { get; set; }
 
     public KeyMapper(MapperConfig config)
     {
@@ -148,7 +140,8 @@ internal sealed class KeyMapper : IDisposable
         _cmdDown = _optDown = _winNative = _winConverted = false;
         _cmdProfile = _optProfile = null;
         _swallowedUps.Clear();
-        _filterHeld = null;
+        if (_middleReplayed) SendMiddle(down: false);
+        _middlePending = _middleReplayed = false;
         CommandFinished?.Invoke();
     }
 
@@ -184,15 +177,116 @@ internal sealed class KeyMapper : IDisposable
 
     private IntPtr MouseCallback(int nCode, IntPtr wParam, IntPtr lParam)
     {
-        if (nCode >= 0 && _enabled && wParam.ToInt32() is
-                WM_LBUTTONDOWN or WM_RBUTTONDOWN or WM_MBUTTONDOWN or WM_XBUTTONDOWN or
-                WM_MOUSEWHEEL or WM_MOUSEHWHEEL)
+        if (nCode >= 0 && _enabled)
         {
-            try { HandleMouse(); }
-            catch (Exception e) { DebugLog.Write($"Mouse: erro {e.GetType().Name} {e.Message}"); }
+            int msg = wParam.ToInt32();
+            try
+            {
+                var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                if (data.dwExtraInfo != KeyInjector.Marker)
+                {
+                    if (HandleMiddleButton(msg, data)) return (IntPtr)1; // swallow
+                    if (msg is WM_LBUTTONDOWN or WM_RBUTTONDOWN or WM_MBUTTONDOWN or WM_XBUTTONDOWN
+                        or WM_MOUSEWHEEL or WM_MOUSEHWHEEL)
+                        HandleMouse();
+                }
+            }
+            catch (Exception e)
+            {
+                DebugLog.Write($"Mouse: erro {e.GetType().Name} {e.Message}");
+            }
         }
-        // Never swallow mouse input: we only make sure the right modifier is down before it lands.
+        // Mouse input is only swallowed for the middle-button gesture; otherwise MacKeys just makes sure
+        // the right modifier is down before the event lands.
         return CallNextHookEx(IntPtr.Zero, nCode, wParam, lParam);
+    }
+
+    // ───────────── middle click → Task View (Mission Control) ─────────────
+
+    private const int DragThreshold = 8;       // pixels: further than this is a drag, not a click
+    private const int LongPressMs = 500;       // held longer without moving: an ordinary middle click
+
+    private bool _middlePending;   // middle button down swallowed; deciding between click and drag
+    private bool _middleReplayed;  // turned out to be a drag: we re-sent the press, its release goes through
+    private int _middleX, _middleY;
+    private long _middleAt;
+
+    /// <summary>
+    /// A quick middle click opens Task View, like Mission Control on a Mac mouse. Dragging with the middle
+    /// button (panning in Figma, autoscroll in browsers) is given back to the app as a normal press, and apps
+    /// listed as exceptions (Revit, AutoCAD) never see any change.
+    /// </summary>
+    /// <returns>true to swallow the event.</returns>
+    private bool HandleMiddleButton(int msg, MSLLHOOKSTRUCT data)
+    {
+        if (msg == WM_MBUTTONDOWN)
+        {
+            if (!On(ShortcutId.MiddleClickTaskView) || _cmdDown || _optDown || !MiddleClickApplies(data)) return false;
+            _middlePending = true;
+            _middleX = data.x;
+            _middleY = data.y;
+            _middleAt = Environment.TickCount64;
+            return true;
+        }
+
+        if (_middlePending)
+        {
+            bool moved = Math.Abs(data.x - _middleX) > DragThreshold || Math.Abs(data.y - _middleY) > DragThreshold;
+            if (msg == WM_MBUTTONUP)
+            {
+                _middlePending = false;
+                if (Environment.TickCount64 - _middleAt < LongPressMs)
+                {
+                    _host.Invoke(() => KeyInjector.Tap(Keys.Tab, Keys.LWin)); // Task View
+                }
+                else
+                {
+                    // A slow press is just a middle click (e.g. browser autoscroll): replay it.
+                    SendMiddle(down: true);
+                    SendMiddle(down: false);
+                }
+                return true;
+            }
+            if ((msg == WM_MOUSEMOVE && moved) || msg is WM_LBUTTONDOWN or WM_RBUTTONDOWN or WM_MOUSEWHEEL)
+            {
+                // A drag (or something else entirely): give the app its middle press after all.
+                _middlePending = false;
+                _middleReplayed = true;
+                SendMiddle(down: true);
+            }
+            return false;
+        }
+
+        if (_middleReplayed && msg == WM_MBUTTONUP)
+            _middleReplayed = false; // the real release matches the press we re-sent
+        return false;
+    }
+
+    /// <summary>The middle click opens Task View unless the window under the cursor belongs to an exception.</summary>
+    private bool MiddleClickApplies(MSLLHOOKSTRUCT data)
+    {
+        IntPtr window = GetAncestor(WindowFromPoint(new POINT { X = data.x, Y = data.y }), GA_ROOT);
+        GetWindowThreadProcessId(window, out uint pid);
+        if (pid == 0) return true;
+        var (exe, _, _) = ProcessFor(pid);
+        return !_config.KeepsMiddleClick(exe) && _config.ProfileFor(exe) != null;
+    }
+
+    private static void SendMiddle(bool down)
+    {
+        var input = new INPUT
+        {
+            type = INPUT_MOUSE,
+            u = new InputUnion
+            {
+                mi = new MOUSEINPUT
+                {
+                    dwFlags = down ? MOUSEEVENTF_MIDDLEDOWN : MOUSEEVENTF_MIDDLEUP,
+                    dwExtraInfo = KeyInjector.Marker,
+                },
+            },
+        };
+        SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>());
     }
 
     /// <summary>
@@ -203,8 +297,7 @@ internal sealed class KeyMapper : IDisposable
     {
         var stopwatch = Stopwatch.StartNew();
         var types = new[] { typeof(KeyMapper), typeof(KeyInjector), typeof(Native), typeof(MapperConfig),
-            typeof(Profile), typeof(HookHost), typeof(DebugLog), typeof(QuickLook.QuickLookController),
-            typeof(QuickLook.ExplorerSelection), typeof(QuickLook.QlNative) };
+            typeof(Profile), typeof(HookHost), typeof(DebugLog) };
         foreach (var type in types.SelectMany(t => t.GetNestedTypes(System.Reflection.BindingFlags.NonPublic |
                      System.Reflection.BindingFlags.Public).Prepend(t)))
         {
@@ -286,7 +379,6 @@ internal sealed class KeyMapper : IDisposable
         // Keys waiting for a release we missed.
         foreach (var (key, since) in _swallowedUps.ToList())
             if (MissedRelease(key, since, now)) _swallowedUps.Remove(key);
-        if (_filterHeld is { } held && MissedRelease(held, _filterHeldAt, now)) _filterHeld = null;
         foreach (var (key, since) in _resentKeys.ToList())
         {
             if (!MissedRelease(key, since, now)) continue;
@@ -323,11 +415,6 @@ internal sealed class KeyMapper : IDisposable
 
         if (!isDown)
         {
-            if (_filterHeld == key)
-            {
-                _filterHeld = null;
-                return true;
-            }
             if (_resentKeys.Remove(key))
             {
                 KeyInjector.Up(key);
@@ -336,18 +423,9 @@ internal sealed class KeyMapper : IDisposable
             return _swallowedUps.Remove(key);
         }
 
-        if (_filterHeld == key) return true; // auto-repeat of a key the filter already took
         // A fresh press: forget a release we were waiting for (if it was missed, it must not eat this one's).
         // Replace() re-adds it when this press is swallowed again (auto-repeat included).
         _swallowedUps.Remove(key);
-
-        if (!_cmdDown && !_optDown && PlainKeyFilter != null && On(ShortcutId.QuickLook) && !AnyModifierHeld()
-            && PlainKeyFilter(key))
-        {
-            _filterHeld = key;
-            _filterHeldAt = Environment.TickCount64;
-            return true;
-        }
 
         if (_cmdDown && _cmdProfile != null) return HandleCmdCombo(key, _cmdProfile);
 
@@ -724,10 +802,6 @@ internal sealed class KeyMapper : IDisposable
     // ───────────── helpers ─────────────
 
     private static bool IsArrow(Keys key) => key is Keys.Left or Keys.Right or Keys.Up or Keys.Down;
-
-    private static bool AnyModifierHeld() =>
-        IsPhysicallyDown(Keys.ShiftKey) || IsPhysicallyDown(Keys.ControlKey) ||
-        IsPhysicallyDown(Keys.RMenu) || IsPhysicallyDown(Keys.RWin);
 
     private static bool IsModifier(Keys key) => key is
         Keys.LShiftKey or Keys.RShiftKey or Keys.ShiftKey or

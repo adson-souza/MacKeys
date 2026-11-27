@@ -1,0 +1,44 @@
+name: Problem · Problema
+description: Something didn't work as it should · Algo não funcionou como deveria
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for letting us know! The easiest way is from the app itself: click the ⌘ next to the clock › **Report a Problem…**, which fills in the technical details.
+
+        Obrigado por avisar! O jeito mais fácil é pelo próprio app: clique no ⌘ perto do relógio › **Relatar um problema…**, que já preenche as informações técnicas.
+  - type: textarea
+    id: descricao
+    attributes:
+      label: What happened? · O que aconteceu?
+      description: What you did, what you expected and what happened. · O que você fez, o que esperava e o que aconteceu.
+      placeholder: "E.g. in InDesign, ⌘Space opened Windows Search instead of zooming. · Ex.: no InDesign, ⌘Espaço abriu a pesquisa do Windows em vez do zoom."
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Which app? · Em qual app?
+      placeholder: "Photoshop, Revit, File Explorer…"
+  - type: input
+    id: versao
+    attributes:
+      label: MacKeys version · Versão do MacKeys
+      description: Settings › About · Configurações › Sobre
+      placeholder: "0.5.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows
+      options:
+        - Windows 11
+        - Windows 10
+  - type: textarea
+    id: autoteste
+    attributes:
+      label: Self-test report (optional) · Relatório do autoteste (opcional)
+      description: Settings › About › Test the keyboard. Paste the lines that don't say OK. · Configurações › Sobre › Testar o teclado. Cole as linhas que não dizem OK.
+      render: text

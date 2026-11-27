@@ -14,6 +14,9 @@ internal static class ScreenshotMode
     {
         Directory.CreateDirectory(folder);
         SaveTrayPreview(Path.Combine(folder, "bandeja.png"));
+        SaveIcon(Path.Combine(folder, "icone.png"));
+        // Real update state from GitHub (off the UI thread: the checker awaits on the thread pool).
+        Task.Run(() => UpdateChecker.CheckAsync(app.Settings.IncludePrereleases)).Wait(TimeSpan.FromSeconds(30));
         foreach (bool dark in new[] { false, true })
         {
             Theme.Apply(app.Resources, dark);
@@ -52,24 +55,28 @@ internal static class ScreenshotMode
             Save(sheet, Path.Combine(folder, $"cola-padrao-{theme}.png"));
             sheet.Close();
 
-            // Quick Look: an image, a text file and a folder.
-            string sampleText = Path.Combine(folder, "exemplo.cs");
-            File.WriteAllText(sampleText,
-                "// Exemplo de código\nnamespace MacKeys;\n\ninternal static class Ola\n{\n    public static string Mensagem => \"Olá, Quick Look!\";\n}\n");
-            var samples = new[]
+            var report = new ReportWindow();
+            Save(report, Path.Combine(folder, $"relatar-{theme}.png"));
+            report.Close();
+
+            var setup = new SetupWindow(uninstall: false) { ShutdownOnClose = false };
+            string[] setupNames = { "introducao", "licenca", "opcoes", "instalando", "concluido" };
+            for (int step = 0; step < setupNames.Length; step++)
             {
-                ("imagem", Path.Combine(folder, $"config-General-{theme}.png")),
-                ("texto", sampleText),
-                ("pasta", folder),
-            };
-            foreach (var (label, sample) in samples)
-            {
-                var preview = new MacKeys.QuickLook.PreviewWindow();
-                preview.ShowFor(IntPtr.Zero, new List<string> { sample });
-                Save(preview, Path.Combine(folder, $"quicklook-{label}-{theme}.png"));
-                preview.Close();
+                setup.Preview(step);
+                Save(setup, Path.Combine(folder, $"instalador-{setupNames[step]}-{theme}.png"));
             }
+            setup.PreviewAgreeSheet();
+            Save(setup, Path.Combine(folder, $"instalador-concordar-{theme}.png"));
+            setup.Close();
         }
+        SaveMissing(folder);
+    }
+
+    /// <summary>Texts shown in English without a translation, for the developer.</summary>
+    private static void SaveMissing(string folder)
+    {
+        if (L.English) File.WriteAllLines(Path.Combine(folder, "faltando.txt"), L.Missing.Order());
     }
 
     /// <summary>Tray icon on dark and light taskbar strips, active and paused, magnified 4×.</summary>
@@ -94,6 +101,14 @@ internal static class ScreenshotMode
             }
         }
         sheet.Save(file, System.Drawing.Imaging.ImageFormat.Png);
+    }
+
+    private static void SaveIcon(string file)
+    {
+        var encoder = new PngBitmapEncoder();
+        encoder.Frames.Add(BitmapFrame.Create(AppCatalog.AppIcon));
+        using var stream = File.Create(file);
+        encoder.Save(stream);
     }
 
     private static void Save(Window window, string file)

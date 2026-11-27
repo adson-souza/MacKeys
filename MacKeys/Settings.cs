@@ -22,10 +22,41 @@ internal sealed class Settings
     /// <summary>What ⌘Space opens (outside apps where it is the zoom tool).</summary>
     public SearchTarget CmdSpaceTarget { get; set; } = SearchTarget.WindowsSearch;
 
+    /// <summary>Language of the whole app: the system's (Portuguese or English) or a fixed one.</summary>
+    public AppLanguage Language { get; set; } = AppLanguage.Auto;
+
+    /// <summary>The saved language choice, read without loading (or writing) the settings file.</summary>
+    public static AppLanguage SavedLanguage()
+    {
+        try
+        {
+            if (!File.Exists(FilePath)) return AppLanguage.Auto;
+            using var doc = JsonDocument.Parse(File.ReadAllText(FilePath));
+            return doc.RootElement.TryGetProperty(nameof(Language), out var value) &&
+                   Enum.TryParse(value.GetString(), out AppLanguage language) ? language : AppLanguage.Auto;
+        }
+        catch (Exception) { return AppLanguage.Auto; }
+    }
+
+    /// <summary>Look for new MacKeys and QuickLook releases on GitHub (at startup and once a day).</summary>
+    public bool CheckForUpdates { get; set; } = true;
+
+    /// <summary>Test versions (GitHub pre-releases) count as updates too.</summary>
+    public bool IncludePrereleases { get; set; } = true;
+
+    /// <summary>Last version announced with a banner, so each one is announced once.</summary>
+    public string? AnnouncedUpdate { get; set; }
+
     /// <summary>Raised after every save, so the keyboard thread can pick up a fresh <see cref="MapperConfig"/>.</summary>
     public event Action? Saved;
 
-    public MapperConfig Snapshot() => new(DisabledShortcuts, AppProfiles, WinAsOption, CmdSpaceTarget);
+    public MapperConfig Snapshot() => new(DisabledShortcuts, AppProfiles, WinAsOption, CmdSpaceTarget, NativeMiddleClickApps);
+
+    /// <summary>
+    /// Apps where the middle button stays untouched instead of opening Task View: CAD apps pan, orbit and
+    /// zoom-to-fit with it (double click).
+    /// </summary>
+    public List<string> NativeMiddleClickApps { get; set; } = new() { "Revit.exe", "acad.exe" };
 
     /// <summary>
     /// Off by default: ⌘ + arrows for line/document navigation (they get in the way of window shortcuts),

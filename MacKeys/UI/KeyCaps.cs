@@ -33,8 +33,9 @@ internal sealed class KeyCaps : StackPanel
     {
         Children.Clear();
         double size = Large ? 14 : 12;
-        foreach (var token in Keys.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        foreach (var word in L.Keys(Keys).Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
+            string token = L.Keys(word);
             bool isText = token is "·" or "/" or "+" || (token.Length > 1 && char.IsLower(token[0]));
             if (isText)
             {

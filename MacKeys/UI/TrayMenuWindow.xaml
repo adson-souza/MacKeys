@@ -29,6 +29,17 @@
                           Click="EnabledSwitch_Click" />
             </Grid>
 
+            <Button x:Name="UpdateRow" Style="{StaticResource MenuRow}" Click="Update_Click" Visibility="Collapsed"
+                    Margin="0,0,0,2">
+                <StackPanel Orientation="Horizontal">
+                    <Border Width="18" Height="18" CornerRadius="9" Background="{DynamicResource Accent}" Margin="0,0,10,0">
+                        <TextBlock Text="&#xE896;" FontFamily="Segoe Fluent Icons, Segoe MDL2 Assets" FontSize="10" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock x:Name="UpdateText" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+            </Button>
+
             <Border Style="{StaticResource MenuSeparator}" />
 
             <Button Style="{StaticResource MenuRow}" Click="Settings_Click">
@@ -45,12 +56,29 @@
 
             <Border Style="{StaticResource MenuSeparator}" />
 
+            <Grid Margin="10,4,10,4">
+                <StackPanel Margin="0,0,10,0" VerticalAlignment="Center">
+                    <TextBlock Text="Quick Look" />
+                    <TextBlock x:Name="QuickLookStatusText" Style="{StaticResource Secondary}" />
+                </StackPanel>
+                <CheckBox x:Name="QuickLookSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                          Click="QuickLookSwitch_Click" />
+            </Grid>
+            <Button Style="{StaticResource MenuRow}" Click="QuickLookOptions_Click">
+                <TextBlock Text="Opções do Quick Look…" />
+            </Button>
+
+            <Border Style="{StaticResource MenuSeparator}" />
+
             <Button Style="{StaticResource MenuRow}" Click="Unstick_Click">
                 <TextBlock Text="Destravar teclas" />
             </Button>
 
             <Border Style="{StaticResource MenuSeparator}" />
 
+            <Button Style="{StaticResource MenuRow}" Click="Report_Click">
+                <TextBlock Text="Relatar um problema…" />
+            </Button>
             <Button Style="{StaticResource MenuRow}" Click="Quit_Click">
                 <TextBlock Text="Sair do MacKeys" />
             </Button>

@@ -14,6 +14,7 @@ public partial class HintWindow : Window
     public HintWindow()
     {
         InitializeComponent();
+        L.Translate(this);
         SourceInitialized += (_, _) =>
         {
             var hwnd = new WindowInteropHelper(this).Handle;

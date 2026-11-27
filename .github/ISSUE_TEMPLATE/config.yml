@@ -1,0 +1,6 @@
+# Blank issues stay on: "Report a Problem…" inside MacKeys opens one already filled in.
+blank_issues_enabled: true
+contact_links:
+  - name: Preview problems (QuickLook) · Problemas na pré-visualização
+    url: https://github.com/QL-Win/QuickLook/issues
+    about: If a file type doesn't open or looks wrong in Quick Look, the QuickLook project can fix it. · Se um tipo de arquivo não abre ou aparece errado no Quick Look, quem resolve é o projeto QuickLook.

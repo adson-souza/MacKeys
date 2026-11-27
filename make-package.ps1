@@ -1,30 +1,19 @@
-﻿# Builds dist\MacKeys-<version>.zip: a self-contained single-file MacKeys.exe (no .NET needed on the
-# target machine) plus Instalar.cmd / Desinstalar.cmd / LEIA-ME.txt from the package folder.
+﻿# Builds dist\MacKeys-<version>-Instalador.exe: MacKeys itself as a self-contained single file (no .NET
+# needed on the target machine). Named like this, the executable opens its installer window; once installed
+# in %LOCALAPPDATA%\Programs\MacKeys it runs as the app. QuickLook is downloaded during installation.
 $ErrorActionPreference = 'Stop'
-$version = '0.4.1'
 $root = $PSScriptRoot
-$stage = Join-Path $root "dist\MacKeys-$version"
-$zip = Join-Path $root "dist\MacKeys-$version.zip"
+$version = ([xml](Get-Content (Join-Path $root 'MacKeys\MacKeys.csproj'))).Project.PropertyGroup.Version | Select-Object -First 1
+$build = Join-Path $root 'dist\build'
+$installer = Join-Path $root "dist\MacKeys-$version-Instalador.exe"
 
-Remove-Item $stage, $zip -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force $stage | Out-Null
+Remove-Item $build -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item $installer -Force -ErrorAction SilentlyContinue
 
 dotnet publish (Join-Path $root 'MacKeys') -c Release -r win-x64 --self-contained true `
     -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:PublishReadyToRun=true `
-    -o (Join-Path $root 'dist\build') --nologo -v q
+    -o $build --nologo -v q
 if ($LASTEXITCODE -ne 0) { throw 'dotnet publish falhou' }
 
-Copy-Item (Join-Path $root 'dist\build\MacKeys.exe') $stage
-foreach ($file in Get-ChildItem (Join-Path $root 'package')) {
-    if ($file.Extension -eq '.ps1') {
-        # Windows PowerShell 5.1 needs a BOM to read accents and ⌘ correctly.
-        $text = [IO.File]::ReadAllText($file.FullName)
-        [IO.File]::WriteAllText((Join-Path $stage $file.Name), $text, (New-Object System.Text.UTF8Encoding $true))
-    }
-    else {
-        Copy-Item $file.FullName $stage
-    }
-}
-
-Compress-Archive -Path "$stage\*" -DestinationPath $zip
-Get-Item $zip | Select-Object FullName, @{ n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } }
+Copy-Item (Join-Path $build 'MacKeys.exe') $installer
+Get-Item $installer | Select-Object FullName, @{ n = 'MB'; e = { [math]::Round($_.Length / 1MB, 1) } }

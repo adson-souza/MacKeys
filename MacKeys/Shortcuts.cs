@@ -19,6 +19,7 @@ internal enum ShortcutId
     WordDelete,
     QuickLook,
     FinderShortcuts,
+    MiddleClickTaskView,
 }
 
 internal sealed record ShortcutInfo(ShortcutId Id, string Group, string Keys, string Title, string Windows);
@@ -45,10 +46,12 @@ internal static class Shortcuts
         new(ShortcutId.LockScreen, "Sistema", "⌥ L", "Bloquear o computador", "Win+L"),
 
         new(ShortcutId.QuickLook, "Arquivos", "Espaço", "Pré-visualizar o arquivo selecionado (Quick Look)",
-            "Explorador de Arquivos. Espaço ou Esc fecham, as setas trocam de arquivo"),
+            "QuickLook, de QL-Win. Espaço ou Esc fecham, as setas trocam de arquivo, Enter abre"),
         new(ShortcutId.FinderShortcuts, "Arquivos", "⌘ P · ⌘ ↑ · ⌘ ⌫", "Atalhos do Finder no Explorador",
             "painel de visualização (Alt+P), pasta acima, abrir (⌘↓), voltar/avançar (⌘[ ⌘]), apagar, propriedades (⌘I)"),
 
+        new(ShortcutId.MiddleClickTaskView, "Mouse", "clique do meio", "Ver todas as janelas (Mission Control)",
+            "Visão de Tarefas (Win+Tab). Arrastar com o botão do meio continua normal; exceções em Apps"),
         new(ShortcutId.MouseModifiers, "Mouse", "⌘ / ⌥ + clique", "Clicar, arrastar e rolar com ⌘ e ⌥", "Ctrl / Alt + clique"),
     };
 

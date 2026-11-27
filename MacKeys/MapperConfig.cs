@@ -18,14 +18,20 @@ internal sealed class MapperConfig
     private readonly HashSet<ShortcutId> _disabled;
     private readonly Dictionary<string, string> _appProfiles;
 
+    private readonly HashSet<string> _nativeMiddleClick;
+
     public MapperConfig(IEnumerable<ShortcutId> disabled, IDictionary<string, string> appProfiles, bool winAsOption,
-        SearchTarget search)
+        SearchTarget search, IEnumerable<string>? nativeMiddleClickApps = null)
     {
         _disabled = new HashSet<ShortcutId>(disabled);
         _appProfiles = new Dictionary<string, string>(appProfiles, StringComparer.OrdinalIgnoreCase);
         WinAsOption = winAsOption;
         Search = search;
+        _nativeMiddleClick = new HashSet<string>(nativeMiddleClickApps ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
     }
+
+    /// <summary>The middle button stays normal in this app (e.g. "Revit.exe").</summary>
+    public bool KeepsMiddleClick(string exe) => _nativeMiddleClick.Contains(exe);
 
     public bool WinAsOption { get; }
 

@@ -15,6 +15,7 @@ public partial class CheatSheetWindow : Window
     public CheatSheetWindow()
     {
         InitializeComponent();
+        L.Translate(this);
         SourceInitialized += (_, _) =>
         {
             var hwnd = new WindowInteropHelper(this).Handle;
@@ -28,8 +29,8 @@ public partial class CheatSheetWindow : Window
         string name = string.IsNullOrEmpty(exe) ? "Windows" : AppCatalog.DisplayName(exe);
         AppName.Text = name;
         AppIconHost.Content = SettingsWindow.AppIconView(exe, name, 36);
-        ProfileName.Text = profile.Name;
-        ProfileHint.Text = profile.Description;
+        ProfileName.Text = L.T(profile.Name);
+        ProfileHint.Text = L.T(profile.Description);
 
         Columns.Children.Clear();
         foreach (var (group, rows) in CheatSheet.For(profile, settings))
@@ -37,7 +38,7 @@ public partial class CheatSheetWindow : Window
             var column = new StackPanel { Width = 300, Margin = new Thickness(0, 0, 24, 0) };
             column.Children.Add(new TextBlock
             {
-                Text = group,
+                Text = L.T(group),
                 Style = (Style)FindResource("GroupHeader"),
                 Margin = new Thickness(0, 16, 0, 6),
             });
@@ -46,7 +47,7 @@ public partial class CheatSheetWindow : Window
                 var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
                 row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(138) });
                 row.ColumnDefinitions.Add(new ColumnDefinition());
-                var text = new TextBlock { Text = description, TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+                var text = new TextBlock { Text = L.T(description), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
                 Grid.SetColumn(text, 1);
                 row.Children.Add(new KeyCaps { Keys = keys });
                 row.Children.Add(text);
@@ -143,6 +144,7 @@ internal static class CheatSheet
 
         string optKey = opt ? "⌥" : "Win";
         Add("Mouse",
+            If(on(ShortcutId.MiddleClickTaskView), "clique do meio", "Ver todas as janelas"),
             If(on(ShortcutId.MouseModifiers), "⌘ + clique", "Ctrl + clique"),
             If(on(ShortcutId.MouseModifiers), $"{optKey} + arrastar", "Alt + arrastar (duplicar)"),
             If(on(ShortcutId.MouseModifiers), $"{optKey} + rolar", "Alt + rolar"));

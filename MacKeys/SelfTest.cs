@@ -51,7 +51,7 @@ internal sealed class SelfTest
         };
         box.PreviewMouseDown += (_, e) =>
         {
-            _seen.Add($"{Keyboard.Modifiers}+Clique");
+            _seen.Add($"{Keyboard.Modifiers}+{(e.ChangedButton == MouseButton.Middle ? "Meio" : "Clique")}");
             e.Handled = true;
         };
         var window = new Window { Title = "MacKeys autoteste", Width = 420, Height = 160, Content = box, Topmost = true };
@@ -126,6 +126,38 @@ internal sealed class SelfTest
             await Down(Keys.LWin); await Click(); await Up(Keys.LWin);
         });
 
+        // 6c. Middle button: a quick click opens Task View (the app doesn't get it); a drag reaches the app.
+        _seen.Clear();
+        await MouseEvent(0x0020); await MouseEvent(0x0040); // middle down, up
+        await Task.Delay(1500);
+        string afterClick = ForegroundClass();
+        Check("clique do meio abre a Visão de Tarefas", afterClick == "XamlExplorerHostIslandWindow",
+            $"janela em primeiro plano: {afterClick}");
+        Check("clique do meio não chega ao app", _seen.Count == 0, $"recebido [{string.Join(" | ", _seen)}]");
+        if (afterClick == "XamlExplorerHostIslandWindow") { await Tap(Keys.Escape); await Task.Delay(1000); }
+        window.Activate();
+        SetCursorPos((int)center.X, (int)center.Y);
+        await Task.Delay(400);
+
+        await Case("arrastar com o botão do meio chega ao app", "None+Meio", async () =>
+        {
+            await MouseEvent(0x0020);                 // middle down
+            await MouseEvent(0x0001, dx: 40);         // move 40 px
+            await MouseEvent(0x0040);                 // middle up
+        });
+
+        // 6d. An app on the exception list (like Revit) gets its plain middle click.
+        mapper.UpdateConfig(new MapperConfig(Array.Empty<ShortcutId>(),
+            new Dictionary<string, string> { ["MacKeys.exe"] = Profile.Creative.Name }, winAsOption: false,
+            SearchTarget.WindowsSearch, new[] { "MacKeys.exe" }));
+        await Case("app na lista de exceções recebe o clique do meio normal", "None+Meio", async () =>
+        {
+            await MouseEvent(0x0020); await MouseEvent(0x0040);
+        });
+        Check("exceção: Visão de Tarefas não abriu", ForegroundClass() != "XamlExplorerHostIslandWindow",
+            "abriu a Visão de Tarefas");
+        mapper.UpdateConfig(config);
+
         // 7. A burst of 300 key events, then nothing may be left held.
         var keys = new[] { Keys.A, Keys.S, Keys.D, Keys.F };
         for (int i = 0; i < 75; i++)
@@ -181,6 +213,23 @@ internal sealed class SelfTest
             await Task.Delay(40);
         }
     }
+
+    private static async Task MouseEvent(uint flags, int dx = 0)
+    {
+        var input = new INPUT { type = 0, u = new InputUnion { mi = new MOUSEINPUT { dwFlags = flags, dx = dx } } };
+        SendInput(1, new[] { input }, Marshal.SizeOf<INPUT>());
+        await Task.Delay(60);
+    }
+
+    private static string ForegroundClass()
+    {
+        var name = new System.Text.StringBuilder(256);
+        GetClassName(GetForegroundWindow(), name, name.Capacity);
+        return name.ToString();
+    }
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetClassName(IntPtr hwnd, System.Text.StringBuilder name, int max);
 
     [DllImport("user32.dll")]
     private static extern bool SetCursorPos(int x, int y);

@@ -4,7 +4,7 @@ using Forms = System.Windows.Forms;
 
 namespace MacKeys.UI;
 
-/// <summary>The ⌘ in the notification area: white or black to match the taskbar, dimmed when paused.</summary>
+/// <summary>The ⌘ in the notification area: Finder blue when active, light gray when paused.</summary>
 internal sealed class TrayIcon : IDisposable
 {
     private readonly Forms.NotifyIcon _icon;
@@ -26,7 +26,6 @@ internal sealed class TrayIcon : IDisposable
         IntPtr old = _hIcon;
         _hIcon = Render(enabled, Theme.TaskbarIsDark);
         _icon.Icon = Drawing.Icon.FromHandle(_hIcon);
-        _icon.Text = enabled ? "MacKeys — ativo" : "MacKeys — pausado";
         if (old != IntPtr.Zero) DestroyIcon(old);
     }
 
@@ -47,8 +46,10 @@ internal sealed class TrayIcon : IDisposable
             g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.Clear(Drawing.Color.Transparent);
 
-            int alpha = enabled ? 255 : 100;
-            var color = darkTaskbar ? Drawing.Color.FromArgb(alpha, 255, 255, 255) : Drawing.Color.FromArgb(alpha, 0, 0, 0);
+            // Active: the blue of the Finder icon. Paused: 10% gray (#E6E6E6); on a light taskbar that would
+            // vanish, so it darkens just enough to stay visible.
+            var color = enabled ? Drawing.Color.FromArgb(0x1E, 0x9B, 0xFF)
+                : darkTaskbar ? Drawing.Color.FromArgb(0xE6, 0xE6, 0xE6) : Drawing.Color.FromArgb(0xA8, 0xA8, 0xAD);
             using var brush = new Drawing.SolidBrush(color);
 
             // The ⌘ glyph sits small inside its font box, so take its outline and scale it to fill the icon.

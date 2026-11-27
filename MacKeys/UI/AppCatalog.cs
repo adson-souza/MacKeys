@@ -62,7 +62,7 @@ internal static class AppCatalog
 
     public static string DisplayName(string exe, string? path = null)
     {
-        if (KnownNames.TryGetValue(exe, out var name)) return name;
+        if (KnownNames.TryGetValue(exe, out var name)) return L.T(name);
         path ??= FindPath(exe);
         if (path != null)
         {

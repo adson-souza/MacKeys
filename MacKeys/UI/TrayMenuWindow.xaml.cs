@@ -15,8 +15,10 @@ public partial class TrayMenuWindow : Window
     public TrayMenuWindow()
     {
         InitializeComponent();
+        L.Translate(this);
         AppIconImage.Source = AppCatalog.AppIcon;
         App.Current.EnabledChanged += Sync;
+        App.Current.UpdatesChanged += Sync;
         Sync();
     }
 
@@ -51,7 +53,14 @@ public partial class TrayMenuWindow : Window
     {
         bool enabled = App.Current.Settings.Enabled;
         EnabledSwitch.IsChecked = enabled;
-        StatusText.Text = enabled ? "Atalhos do Mac ligados" : "Pausado: teclado normal";
+        StatusText.Text = L.T(enabled ? "Atalhos do Mac ligados" : "Pausado: teclado normal");
+        bool quickLook = App.Current.Settings.IsOn(ShortcutId.QuickLook);
+        QuickLookSwitch.IsChecked = quickLook;
+        QuickLookStatusText.Text = !QuickLookCompanion.IsInstalled ? L.T("Não instalado")
+            : UpdateChecker.QuickLookUpdateAvailable ? L.F("Versão {0} disponível", UpdateChecker.QuickLookLatest!.Version)
+            : L.T(quickLook ? "Espaço pré-visualiza arquivos" : "Desligado");
+        UpdateRow.Visibility = UpdateChecker.MacKeysUpdate != null ? Visibility.Visible : Visibility.Collapsed;
+        UpdateText.Text = L.F("Atualizar para a versão {0}…", UpdateChecker.MacKeysUpdate?.Version);
     }
 
     private void Window_Deactivated(object? sender, EventArgs e) => HideMenu();
@@ -77,10 +86,34 @@ public partial class TrayMenuWindow : Window
         App.Current.ShowSettings(SettingsPage.Apps);
     }
 
+    private void QuickLookSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        App.Current.Settings.SetOn(ShortcutId.QuickLook, QuickLookSwitch.IsChecked == true);
+        Sync();
+    }
+
+    private void QuickLookOptions_Click(object sender, RoutedEventArgs e)
+    {
+        HideMenu();
+        App.Current.ShowSettings(SettingsPage.QuickLook);
+    }
+
     private void Unstick_Click(object sender, RoutedEventArgs e)
     {
         HideMenu();
         App.Current.Mapper.Reset();
+    }
+
+    private void Update_Click(object sender, RoutedEventArgs e)
+    {
+        HideMenu();
+        App.Current.ShowSettings(SettingsPage.About);
+    }
+
+    private void Report_Click(object sender, RoutedEventArgs e)
+    {
+        HideMenu();
+        App.Current.ShowReport();
     }
 
     private void Quit_Click(object sender, RoutedEventArgs e) => App.Current.Quit();

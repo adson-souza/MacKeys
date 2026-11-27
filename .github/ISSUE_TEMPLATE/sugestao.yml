@@ -1,0 +1,16 @@
+name: Suggestion · Sugestão
+description: An idea to make MacKeys better · Uma ideia para o MacKeys ficar melhor
+labels: [enhancement]
+body:
+  - type: textarea
+    id: ideia
+    attributes:
+      label: What's your idea? · Qual é a sua ideia?
+      description: What MacKeys could do, and when it would help. · O que o MacKeys poderia fazer, e em qual situação isso ajudaria.
+      placeholder: "E.g. a Mac shortcut that doesn't work yet, or an app that deserves its own profile. · Ex.: um atalho do Mac que ainda não funciona, ou um app que merece perfil próprio."
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Which app? (if any) · Em qual app? (se for o caso)

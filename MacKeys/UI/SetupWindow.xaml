@@ -1,0 +1,468 @@
+<Window x:Class="MacKeys.UI.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource MacWindow}"
+        Title="Instalar MacKeys" Width="776" Height="556"
+        WindowStartupLocation="CenterScreen">
+    <!-- Laid out like the macOS Installer: steps on the left, the current step in a card on the right. -->
+    <Window.Resources>
+        <FontFamily x:Key="Glyphs">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+        <Style x:Key="StepDot" TargetType="Ellipse">
+            <Setter Property="Width" Value="9" />
+            <Setter Property="Height" Value="9" />
+            <Setter Property="Margin" Value="0,0,10,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style x:Key="PageTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+        </Style>
+
+        <Style x:Key="Body" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineHeight" Value="19" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+        </Style>
+
+        <!-- Colored rounded tile with a white glyph, like System Settings' icons. -->
+        <Style x:Key="Tile" TargetType="Border">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="TileGlyph" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource Glyphs}" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <!-- A choice drawn as a card that lights up when picked. -->
+        <Style x:Key="ChoiceCard" TargetType="RadioButton">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="{DynamicResource Text.Primary}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Box" CornerRadius="10" BorderThickness="1.5" Padding="14,12"
+                                Background="{DynamicResource Bg.Card}" BorderBrush="{DynamicResource Border.Card}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
+                                </Grid.ColumnDefinitions>
+                                <Grid Width="18" Height="18" Margin="0,1,12,0" VerticalAlignment="Top">
+                                    <Ellipse x:Name="Ring" Stroke="{DynamicResource Border.KeyCap}" StrokeThickness="1.5"
+                                             Fill="{DynamicResource Bg.Control}" />
+                                    <Ellipse x:Name="Fill" Fill="{DynamicResource Accent}" Visibility="Collapsed" />
+                                    <Ellipse x:Name="Center" Width="7" Height="7" Fill="White" Visibility="Collapsed" />
+                                </Grid>
+                                <ContentPresenter Grid.Column="1" />
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Accent}" />
+                                <Setter TargetName="Fill" Property="Visibility" Value="Visible" />
+                                <Setter TargetName="Center" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Ring" Property="Stroke" Value="{DynamicResource Accent}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MacProgress" TargetType="ProgressBar">
+            <Setter Property="Height" Value="8" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <Border x:Name="PART_Track" CornerRadius="4" Background="{DynamicResource Switch.Off}" />
+                            <Border x:Name="PART_Indicator" CornerRadius="4" Background="{DynamicResource Accent}"
+                                    HorizontalAlignment="Left" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButton" TargetType="Button">
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <ContentControl Style="{StaticResource MacFrame}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="44" />
+                <RowDefinition />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title bar -->
+            <Grid Background="Transparent" MouseLeftButtonDown="Drag">
+                <StackPanel Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+                    <Button x:Name="CloseButton" Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Close}"
+                            Content="×" ToolTip="Fechar" Click="Close_Click" />
+                    <Button Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Minimize}"
+                            Content="−" ToolTip="Minimizar" Click="Minimize_Click" />
+                    <Button Style="{StaticResource TrafficLight}" Background="{DynamicResource Traffic.Idle}" IsHitTestVisible="False" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Image x:Name="TitleIcon" Width="16" Height="16" Margin="0,0,7,0" />
+                    <TextBlock x:Name="WindowTitle" Text="Instalar MacKeys" FontWeight="SemiBold" FontSize="13" />
+                </StackPanel>
+            </Grid>
+
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="196" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
+
+                <!-- Steps, with the app icon resting faintly below them -->
+                <Grid Background="Transparent" MouseLeftButtonDown="Drag">
+                    <StackPanel x:Name="StepList" Margin="30,52,10,0" />
+                    <Image x:Name="SideIcon" Width="120" Height="120" Opacity="0.12" Margin="38,0,0,6"
+                           HorizontalAlignment="Left" VerticalAlignment="Bottom" IsHitTestVisible="False" />
+                </Grid>
+
+                <Grid Grid.Column="1" Margin="0,0,28,0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock x:Name="HeaderText" Style="{StaticResource PageTitle}" Margin="2,6,0,12"
+                               Text="Bem-vindo ao instalador do MacKeys" />
+
+                    <Border Grid.Row="1" Style="{StaticResource Card}" ClipToBounds="True">
+                        <Grid>
+                            <!-- Introdução -->
+                            <ScrollViewer x:Name="PageIntro" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="26,22,26,20">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Image x:Name="IntroIcon" Width="64" Height="64" Margin="0,0,16,0" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="MacKeys" FontSize="22" FontWeight="SemiBold" />
+                                            <TextBlock x:Name="IntroVersion" Style="{StaticResource Secondary}" Text="Versão 0.5.0" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <TextBlock Style="{StaticResource Body}" Margin="0,18,0,0"
+                                               Text="Seus atalhos do Mac, no teclado do Windows. O Alt da esquerda vira ⌘, a tecla Win ganha o papel do ⌥ onde faz sentido, e cada app recebe o perfil certo." />
+                                    <StackPanel Margin="0,14,0,0">
+                                        <Grid Margin="0,5">
+                                            <TextBlock Text="⌘" FontSize="15" Width="26" HorizontalAlignment="Left" Foreground="{DynamicResource Accent}" />
+                                            <TextBlock Style="{StaticResource Body}" Margin="26,0,0,0"
+                                                       Text="⌘C, ⌘V, ⌘Tab, ⌘Q, ⌘Espaço e o resto, onde seus dedos já procuram." />
+                                        </Grid>
+                                        <Grid Margin="0,5">
+                                            <TextBlock Text="&#xE7B3;" FontFamily="{StaticResource Glyphs}" FontSize="15" Width="26" HorizontalAlignment="Left"
+                                                       Foreground="{DynamicResource Accent}" Margin="0,2,0,0" />
+                                            <TextBlock Style="{StaticResource Body}" Margin="26,0,0,0"
+                                                       Text="Quick Look: aperte Espaço num arquivo para ver o conteúdo sem abrir." />
+                                        </Grid>
+                                        <Grid Margin="0,5">
+                                            <TextBlock Text="&#xE962;" FontFamily="{StaticResource Glyphs}" FontSize="15" Width="26" HorizontalAlignment="Left"
+                                                       Foreground="{DynamicResource Accent}" Margin="0,2,0,0" />
+                                            <TextBlock Style="{StaticResource Body}" Margin="26,0,0,0"
+                                                       Text="Clique do botão do meio mostra todas as janelas, como o Mission Control." />
+                                        </Grid>
+                                    </StackPanel>
+                                    <Border x:Name="UpdateNotice" Background="{DynamicResource Bg.Window}" CornerRadius="8"
+                                            Padding="12,10" Margin="0,16,0,0" Visibility="Collapsed">
+                                        <TextBlock x:Name="UpdateText" Style="{StaticResource Secondary}" />
+                                    </Border>
+                                    <TextBlock Style="{StaticResource Secondary}" Margin="0,16,0,0"
+                                               Text="Não precisa de administrador. Leva menos de um minuto." />
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Licença -->
+                            <ScrollViewer x:Name="PageLicense" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="26,22,26,20">
+                                    <TextBlock Text="Termos de uso" FontWeight="SemiBold" FontSize="14" />
+                                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0"
+                                               Text="MacKeys © 2026 Adson Pereira de Souza. Você pode instalar e usar o MacKeys nos seus computadores. Ele é fornecido como está, sem garantia de nenhum tipo: o autor não se responsabiliza por danos ou perda de dados decorrentes do uso." />
+                                    <TextBlock Style="{StaticResource Body}" Margin="0,10,0,0"
+                                               Text="O MacKeys escuta o teclado e o mouse só para converter os atalhos. Nada do que você digita é gravado ou enviado para lugar nenhum." />
+
+                                    <Border Height="1" Background="{DynamicResource Separator}" Margin="0,18" />
+
+                                    <TextBlock Text="QuickLook" FontWeight="SemiBold" FontSize="14" />
+                                    <TextBlock Style="{StaticResource Body}" Margin="0,8,0,0">
+                                        <Run Text="O Quick Look do MacKeys é o QuickLook, criado por Paddy Xu e mantido pelos colaboradores do projeto QL-Win. Ele é software livre, distribuído sob a Licença Pública Geral GNU versão 3 (GPL-3.0)." />
+                                    </TextBlock>
+                                    <TextBlock Style="{StaticResource Body}" Margin="0,10,0,0"
+                                               Text="Se você escolher instalá-lo, o instalador baixa a versão portátil oficial direto dos lançamentos do projeto no GitHub, confere a assinatura SHA-256 publicada e a instala sem modificações. O código-fonte completo está disponível no repositório do projeto." />
+                                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                        <Button Style="{StaticResource LinkButton}" Click="QuickLookProject_Click">
+                                            <TextBlock Text="github.com/QL-Win/QuickLook" TextDecorations="Underline" />
+                                        </Button>
+                                        <TextBlock Text="  ·  " Foreground="{DynamicResource Text.Tertiary}" />
+                                        <Button Style="{StaticResource LinkButton}" Click="QuickLookLicense_Click">
+                                            <TextBlock Text="Ler a GPL-3.0" TextDecorations="Underline" />
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Opções -->
+                            <ScrollViewer x:Name="PageOptions" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="22,20,22,18">
+                                    <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,12"
+                                               Text="Escolha o que instalar. Tudo pode ser mudado depois nas Configurações do MacKeys." />
+                                    <Border Style="{StaticResource Card}" Background="{DynamicResource Bg.Window}">
+                                        <StackPanel>
+                                            <Grid Margin="14,11">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource Tile}" Background="#FF9F0A">
+                                                    <TextBlock Style="{StaticResource TileGlyph}" Text="&#xE7B3;" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                                    <TextBlock Text="Quick Look (QuickLook)" FontWeight="SemiBold" />
+                                                    <TextBlock x:Name="QuickLookDetail" Style="{StaticResource Secondary}"
+                                                               Text="Espaço pré-visualiza arquivos no Explorador. Baixa 60 MB do GitHub." />
+                                                </StackPanel>
+                                                <CheckBox x:Name="QuickLookSwitch" Grid.Column="2" Style="{StaticResource MacSwitch}"
+                                                          IsChecked="True" Click="Options_Changed" />
+                                            </Grid>
+                                            <Border Style="{StaticResource RowSeparator}" />
+                                            <Grid Margin="14,11">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource Tile}" Background="#34C759">
+                                                    <TextBlock Style="{StaticResource TileGlyph}" Text="&#xE7E8;" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                                    <TextBlock Text="Iniciar com o Windows" FontWeight="SemiBold" />
+                                                    <TextBlock Style="{StaticResource Secondary}" Text="Os atalhos ficam prontos assim que você entra no computador." />
+                                                </StackPanel>
+                                                <CheckBox x:Name="StartupSwitch" Grid.Column="2" Style="{StaticResource MacSwitch}" IsChecked="True" />
+                                            </Grid>
+                                            <Border Style="{StaticResource RowSeparator}" />
+                                            <Grid Margin="14,11">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border Style="{StaticResource Tile}" Background="#007AFF">
+                                                    <TextBlock Style="{StaticResource TileGlyph}" Text="&#xE71D;" />
+                                                </Border>
+                                                <StackPanel Grid.Column="1" Margin="0,0,14,0">
+                                                    <TextBlock Text="Atalho no menu Iniciar" FontWeight="SemiBold" />
+                                                    <TextBlock Style="{StaticResource Secondary}" Text="Para abrir as Configurações do MacKeys pela pesquisa." />
+                                                </StackPanel>
+                                                <CheckBox x:Name="StartMenuSwitch" Grid.Column="2" Style="{StaticResource MacSwitch}" IsChecked="True" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                    <Grid Margin="2,14,2,0">
+                                        <TextBlock Style="{StaticResource Secondary}" Text="Local" />
+                                        <TextBlock x:Name="InstallPathText" Style="{StaticResource Secondary}" Margin="70,0,0,0"
+                                                   TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                                    </Grid>
+                                    <Grid Margin="2,4,2,0">
+                                        <TextBlock Style="{StaticResource Secondary}" Text="Espaço" />
+                                        <TextBlock x:Name="SpaceText" Style="{StaticResource Secondary}" Margin="70,0,0,0" />
+                                    </Grid>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- PowerToys -->
+                            <ScrollViewer x:Name="PagePowerToys" Visibility="Collapsed" VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="22,20,22,18">
+                                    <StackPanel Orientation="Horizontal" Margin="2,0,0,12">
+                                        <Border Style="{StaticResource Tile}" Background="#5E5CE6">
+                                            <TextBlock Style="{StaticResource TileGlyph}" Text="&#xE945;" />
+                                        </Border>
+                                        <TextBlock Style="{StaticResource Body}" VerticalAlignment="Center" MaxWidth="410"
+                                                   Text="O PowerToys também mexe no teclado. Encontrei pontos em que ele e o MacKeys podem se atrapalhar." />
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="RemapSection">
+                                        <TextBlock Style="{StaticResource GroupHeader}" Margin="2,4,0,6" Text="Mapeamentos do Keyboard Manager" />
+                                        <Border Style="{StaticResource Card}" Background="{DynamicResource Bg.Window}">
+                                            <StackPanel>
+                                                <StackPanel x:Name="RemapRows" Margin="14,10,14,6" />
+                                                <Border Style="{StaticResource RowSeparator}" />
+                                                <Grid Margin="14,10">
+                                                    <StackPanel Margin="0,0,56,0">
+                                                        <TextBlock Text="Remover estes mapeamentos" FontWeight="SemiBold" />
+                                                        <TextBlock Style="{StaticResource Secondary}"
+                                                                   Text="A mesma tecla acabaria convertida duas vezes. Uma cópia de segurança fica guardada." />
+                                                    </StackPanel>
+                                                    <CheckBox x:Name="RemoveRemapsSwitch" Style="{StaticResource MacSwitch}"
+                                                              HorizontalAlignment="Right" IsChecked="True" />
+                                                </Grid>
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <StackPanel x:Name="PeekSection">
+                                        <TextBlock Style="{StaticResource GroupHeader}" Margin="2,14,0,6" Text="Pré-visualização de arquivos" />
+                                        <TextBlock Style="{StaticResource Secondary}" Margin="2,0,0,8"
+                                                   Text="O Peek do PowerToys está ligado e faz o mesmo que o Quick Look. Os dois disputariam as teclas. Qual você quer usar?" />
+                                        <RadioButton x:Name="UseQuickLookChoice" Style="{StaticResource ChoiceCard}" GroupName="Preview"
+                                                     IsChecked="True" Margin="0,0,0,8">
+                                            <StackPanel>
+                                                <TextBlock Text="Quick Look (QuickLook)" FontWeight="SemiBold" />
+                                                <TextBlock Style="{StaticResource Secondary}"
+                                                           Text="Espaço, como no Mac. O Peek é desligado no PowerToys (com cópia de segurança)." />
+                                            </StackPanel>
+                                        </RadioButton>
+                                        <RadioButton x:Name="UsePeekChoice" Style="{StaticResource ChoiceCard}" GroupName="Preview">
+                                            <StackPanel>
+                                                <TextBlock Text="Peek do PowerToys" FontWeight="SemiBold" />
+                                                <TextBlock Style="{StaticResource Secondary}"
+                                                           Text="Fica como está. O QuickLook não é baixado." />
+                                            </StackPanel>
+                                        </RadioButton>
+                                    </StackPanel>
+                                </StackPanel>
+                            </ScrollViewer>
+
+                            <!-- Desinstalar -->
+                            <StackPanel x:Name="PageUninstall" Visibility="Collapsed" Margin="30,26,30,20">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image x:Name="UninstallIcon" Width="64" Height="64" Margin="0,0,16,0" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="Desinstalar o MacKeys?" FontSize="20" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="UninstallVersion" Style="{StaticResource Secondary}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource Body}" Margin="0,18,0,0"
+                                           Text="O app, o QuickLook que veio com ele, o atalho do menu Iniciar e a inicialização automática serão removidos. O teclado volta ao normal do Windows." />
+                                <Border Style="{StaticResource Card}" Background="{DynamicResource Bg.Window}" Margin="0,18,0,0">
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,56,0">
+                                            <TextBlock Text="Apagar também minhas configurações" FontWeight="SemiBold" />
+                                            <TextBlock Style="{StaticResource Secondary}"
+                                                       Text="Perfis dos apps e atalhos escolhidos. Deixe desligado se pretende reinstalar." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="RemoveSettingsSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right" />
+                                    </Grid>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Instalação / Remoção -->
+                            <Grid x:Name="PageProgress" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" Margin="44,0">
+                                    <TextBlock x:Name="ProgressTitle" Text="Instalando o MacKeys…" FontSize="15" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" />
+                                    <ProgressBar x:Name="Progress" Style="{StaticResource MacProgress}" Margin="0,18,0,0" />
+                                    <TextBlock x:Name="ProgressStatus" Style="{StaticResource Secondary}" HorizontalAlignment="Center"
+                                               Margin="0,10,0,0" Text="Preparando…" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Resumo -->
+                            <Grid x:Name="PageDone" Visibility="Collapsed">
+                                <StackPanel VerticalAlignment="Center" Margin="40,0">
+                                    <Grid Width="76" Height="76">
+                                        <Ellipse x:Name="DoneCircle" Fill="#34C759" />
+                                        <Path x:Name="DoneCheck" Data="M22,39 L33,50 L55,27" Stroke="White" StrokeThickness="6"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                                        <TextBlock x:Name="DoneBang" Text="!" FontSize="44" FontWeight="Bold" Foreground="White"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-6,0,0"
+                                                   Visibility="Collapsed" />
+                                    </Grid>
+                                    <TextBlock x:Name="DoneTitle" Text="A instalação foi concluída." FontSize="18" FontWeight="SemiBold"
+                                               HorizontalAlignment="Center" Margin="0,18,0,0" />
+                                    <TextBlock x:Name="DoneText" Style="{StaticResource Body}" TextAlignment="Center" Margin="0,8,0,0"
+                                               Foreground="{DynamicResource Text.Secondary}"
+                                               Text="O MacKeys foi instalado. Procure o ⌘ perto do relógio." />
+                                    <StackPanel x:Name="WarningList" Margin="0,12,0,0" />
+                                    <StackPanel x:Name="LaunchRow" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
+                                        <CheckBox x:Name="LaunchSwitch" Style="{StaticResource MacSwitch}" IsChecked="True" Margin="0,0,10,0" />
+                                        <TextBlock Text="Abrir o MacKeys agora" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                    <Button x:Name="ShowLogButton" Style="{StaticResource LinkButton}" HorizontalAlignment="Center"
+                                            Margin="0,14,0,0" Visibility="Collapsed" Click="ShowLog_Click">
+                                        <TextBlock Text="Mostrar o registro da instalação" TextDecorations="Underline" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- License agreement sheet, sliding over the card like a macOS sheet -->
+                            <Grid x:Name="AgreeSheet" Visibility="Collapsed">
+                                <Border Background="#33000000" />
+                                <Border Background="{DynamicResource Bg.Card}" CornerRadius="0,0,12,12" VerticalAlignment="Top"
+                                        Margin="34,0" Padding="22,20,22,18" BorderBrush="{DynamicResource Border.Card}" BorderThickness="1,0,1,1">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="24" ShadowDepth="6" Direction="270" Opacity="0.25" />
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Style="{StaticResource Body}" FontWeight="SemiBold"
+                                                   Text="Para continuar a instalação, você precisa concordar com os termos de uso." />
+                                        <TextBlock Style="{StaticResource Secondary}" Margin="0,6,0,0"
+                                                   Text="Clique em Concordar para continuar, ou em Discordar para cancelar a instalação." />
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+                                            <Button Style="{StaticResource MacButton}" Content="Ler os termos" Margin="0,0,8,0" Click="ReadLicense_Click" />
+                                            <Button Style="{StaticResource MacButton}" Content="Discordar" Margin="0,0,8,0" Click="Disagree_Click" />
+                                            <Button Style="{StaticResource PrimaryButton}" Content="Concordar" MinWidth="90" Click="Agree_Click" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </Grid>
+
+            <!-- Language, on the first screen only -->
+            <StackPanel x:Name="LanguagePicker" Grid.Row="2" Orientation="Horizontal" Margin="30,16,0,22"
+                        HorizontalAlignment="Left" VerticalAlignment="Center">
+                <TextBlock Text="&#xE774;" FontFamily="{StaticResource Glyphs}" FontSize="13" Margin="0,1,8,0"
+                           Foreground="{DynamicResource Text.Secondary}" VerticalAlignment="Center" />
+                <Button x:Name="PortugueseButton" Style="{StaticResource LinkButton}" Click="Portuguese_Click">
+                    <TextBlock Text="Português (Brasil)" />
+                </Button>
+                <TextBlock Text="  ·  " Foreground="{DynamicResource Text.Tertiary}" VerticalAlignment="Center" />
+                <Button x:Name="EnglishButton" Style="{StaticResource LinkButton}" Click="English_Click">
+                    <TextBlock Text="English" />
+                </Button>
+            </StackPanel>
+
+            <!-- Buttons -->
+            <Grid Grid.Row="2" Margin="196,16,28,22">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button x:Name="BackButton" Style="{StaticResource MacButton}" Content="Voltar" MinWidth="96"
+                            Margin="0,0,10,0" Click="Back_Click" />
+                    <Button x:Name="NextButton" Style="{StaticResource PrimaryButton}" Content="Continuar" MinWidth="96"
+                            Click="Next_Click" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </ContentControl>
+</Window>

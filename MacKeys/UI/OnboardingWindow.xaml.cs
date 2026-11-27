@@ -15,11 +15,14 @@ public partial class OnboardingWindow : Window
     public OnboardingWindow()
     {
         InitializeComponent();
+        L.Translate(this);
         Icon = AppCatalog.AppIcon;
         HeroIcon.Source = AppCatalog.AppIcon;
         _steps = new UIElement[] { Step1, Step2, Step3 };
         _dots = new[] { Dot1, Dot2, Dot3 };
         CheatSheetSwitch.IsChecked = App.Current.Settings.ShowCheatSheet;
+        // The installer already asked about starting with Windows; keep that answer.
+        if (Installer.InstalledVersion != null) StartupSwitch.IsChecked = Startup.IsEnabled;
         ShowStep(0);
     }
 
@@ -32,7 +35,7 @@ public partial class OnboardingWindow : Window
             _dots[i].SetResourceReference(Shape.FillProperty, i == step ? "Accent" : "Text.Tertiary");
         }
         BackButton.Visibility = step == 0 ? Visibility.Hidden : Visibility.Visible;
-        NextButton.Content = step == _steps.Length - 1 ? "Começar" : "Continuar";
+        NextButton.Content = L.T(step == _steps.Length - 1 ? "Começar" : "Continuar");
         if (step == 1) PracticeBox.Focus();
     }
 

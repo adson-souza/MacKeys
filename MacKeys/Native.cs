@@ -17,6 +17,32 @@ internal static class Native
     public const int WM_MOUSEWHEEL = 0x020A;
     public const int WM_XBUTTONDOWN = 0x020B;
     public const int WM_MOUSEHWHEEL = 0x020E;
+    public const int WM_MOUSEMOVE = 0x0200;
+    public const int WM_MBUTTONUP = 0x0208;
+
+    public const uint INPUT_MOUSE = 0;
+    public const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
+    public const uint MOUSEEVENTF_MIDDLEUP = 0x0040;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MSLLHOOKSTRUCT
+    {
+        public int x, y;
+        public uint mouseData;
+        public uint flags;
+        public uint time;
+        public IntPtr dwExtraInfo;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct POINT { public int X, Y; }
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr WindowFromPoint(POINT point);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetAncestor(IntPtr hwnd, uint flags);
+    public const uint GA_ROOT = 2;
 
     public const uint INPUT_KEYBOARD = 1;
     public const uint KEYEVENTF_EXTENDEDKEY = 0x0001;
