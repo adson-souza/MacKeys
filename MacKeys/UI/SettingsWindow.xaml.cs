@@ -284,7 +284,9 @@ public partial class SettingsWindow : Window
             UpdateTitle.Text = L.F(update.Prerelease ? "MacKeys {0} disponível (teste)" : "MacKeys {0} disponível", update.Version);
             UpdateDetail.Text = L.F("Você tem a {0}. Suas configurações ficam como estão.", UpdateChecker.CurrentVersion);
             UpdateButton.Content = L.T("Atualizar agora");
-            string notes = update.Notes.Trim();
+            // Release notes are GitHub Markdown: show them as plain text.
+            string notes = System.Text.RegularExpressions.Regex.Replace(update.Notes, @"\*\*|__|`|^#+\s*|^-{3,}\s*$", "",
+                System.Text.RegularExpressions.RegexOptions.Multiline).Trim();
             UpdateNotes.Text = notes.Length > 600 ? notes[..600] + "…" : notes.Length > 0 ? notes : L.T("Sem notas para esta versão.");
             return;
         }
