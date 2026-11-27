@@ -106,6 +106,7 @@ public partial class App : Application
         // These arrive on the keyboard thread: hop to the UI thread before touching windows or timers.
         Mapper.CommandPressed += (app, profile) => Dispatcher.BeginInvoke(() => OnCommandPressed(app, profile));
         Mapper.CommandFinished += () => Dispatcher.BeginInvoke(OnCommandFinished);
+        Mapper.CommandInElevatedWindow += hwnd => Dispatcher.BeginInvoke(() => ShowElevatedNotice(hwnd));
         _cheatSheetTimer.Tick += (_, _) => ShowCheatSheet();
 
         _quickLook = new QuickLookController(Dispatcher);
@@ -131,6 +132,18 @@ public partial class App : Application
         SystemEvents.UserPreferenceChanged += OnUserPreferenceChanged;
 
         if (!Settings.OnboardingDone) ShowOnboarding();
+    }
+
+    private HintWindow? _hint;
+    private readonly HashSet<IntPtr> _elevatedWindowsNoticed = new();
+
+    /// <summary>Once per administrator window: explains why ⌘ doesn't work there, so it isn't mistaken for a hang.</summary>
+    private void ShowElevatedNotice(IntPtr window)
+    {
+        if (!_elevatedWindowsNoticed.Add(window)) return;
+        _hint ??= new HintWindow();
+        _hint.ShowHint("⌘ não funciona em janelas de administrador",
+            "O Windows bloqueia o MacKeys aqui. Use o Ctrl do teclado nesta janela.");
     }
 
     private void OnSessionSwitch(object? sender, SessionSwitchEventArgs e) => Mapper.Reset();

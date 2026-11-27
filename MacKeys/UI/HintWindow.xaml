@@ -1,0 +1,20 @@
+<Window x:Class="MacKeys.UI.HintWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Style="{StaticResource MacWindow}"
+        Title="MacKeys" SizeToContent="WidthAndHeight"
+        ShowInTaskbar="False" Topmost="True" ShowActivated="False" Focusable="False">
+    <!-- A small banner at the top of the screen that never takes focus and lets clicks through. -->
+    <ContentControl Style="{StaticResource MacFrame}" Background="{DynamicResource Bg.Overlay}">
+        <StackPanel Orientation="Horizontal" Margin="16,12,20,12">
+            <Border Width="30" Height="30" CornerRadius="7" Background="{DynamicResource Bg.KeyCap}" Margin="0,0,12,0"
+                    VerticalAlignment="Center">
+                <TextBlock Text="⌘" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <StackPanel VerticalAlignment="Center" MaxWidth="420">
+                <TextBlock x:Name="TitleText" FontWeight="SemiBold" />
+                <TextBlock x:Name="BodyText" Style="{StaticResource Secondary}" Margin="0,2,0,0" />
+            </StackPanel>
+        </StackPanel>
+    </ContentControl>
+</Window>

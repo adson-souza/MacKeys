@@ -4,7 +4,7 @@ Atalhos de Mac no Windows, sem precisar desaprender. A tecla **Alt da esquerda**
 
 O Alt da direita não muda, então o AltGr continua funcionando no ABNT2.
 
-Desenvolvido por Adson Pereira de Souza. Versão atual: **0.4.0 (teste)**.
+Desenvolvido por Adson Pereira de Souza. Versão atual: **0.4.1 (teste)**.
 
 ## Atalhos
 

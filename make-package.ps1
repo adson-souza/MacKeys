@@ -1,7 +1,7 @@
 ﻿# Builds dist\MacKeys-<version>.zip: a self-contained single-file MacKeys.exe (no .NET needed on the
 # target machine) plus Instalar.cmd / Desinstalar.cmd / LEIA-ME.txt from the package folder.
 $ErrorActionPreference = 'Stop'
-$version = '0.4.0'
+$version = '0.4.1'
 $root = $PSScriptRoot
 $stage = Join-Path $root "dist\MacKeys-$version"
 $zip = Join-Path $root "dist\MacKeys-$version.zip"

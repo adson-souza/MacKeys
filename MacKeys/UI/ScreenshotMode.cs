@@ -35,6 +35,12 @@ internal static class ScreenshotMode
             }
             onboarding.Close();
 
+            var hint = new HintWindow();
+            hint.ShowHint("⌘ não funciona em janelas de administrador",
+                "O Windows bloqueia o MacKeys aqui. Use o Ctrl do teclado nesta janela.");
+            Save(hint, Path.Combine(folder, $"aviso-admin-{theme}.png"));
+            hint.Close();
+
             var menu = new TrayMenuWindow();
             Save(menu, Path.Combine(folder, $"menu-{theme}.png"));
             menu.Close();

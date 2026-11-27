@@ -12,8 +12,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>MacKeys</AssemblyName>
     <RootNamespace>MacKeys</RootNamespace>
-    <Version>0.4.0</Version>
-    <InformationalVersion>0.4.0 (teste)</InformationalVersion>
+    <Version>0.4.1</Version>
+    <InformationalVersion>0.4.1 (teste)</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <ApplicationIcon>Assets\MacKeys.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>

@@ -6,7 +6,7 @@ $target = Join-Path $env:LOCALAPPDATA 'Programs\MacKeys'
 $shortcut = Join-Path ([Environment]::GetFolderPath('Programs')) 'MacKeys.lnk'
 
 Write-Host ''
-Write-Host '  MacKeys 0.4.0 - instalação' -ForegroundColor Cyan
+Write-Host '  MacKeys 0.4.1 - instalação' -ForegroundColor Cyan
 Write-Host ''
 
 if (-not (Test-Path $source)) {

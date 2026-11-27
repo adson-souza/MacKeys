@@ -69,6 +69,14 @@ internal sealed class KeyMapper : IDisposable
     public event Action? CommandFinished;
 
     /// <summary>
+    /// ⌘ was pressed in an administrator window (its handle), where Windows blocks MacKeys' keys and the
+    /// keyboard is left alone. Raised on the keyboard thread.
+    /// </summary>
+    public event Action<IntPtr>? CommandInElevatedWindow;
+
+    private bool _foregroundElevated;
+
+    /// <summary>
     /// Sees plain key presses (no modifiers held) before they reach the app; returning true swallows the key.
     /// Used by Quick Look for Space/Esc in File Explorer. Called on the keyboard thread: must be quick.
     /// </summary>
@@ -388,6 +396,7 @@ internal sealed class KeyMapper : IDisposable
             _cmdDownAt = Environment.TickCount64;
             _cmdProfile = ResolveProfile();
             if (_cmdProfile != null) CommandPressed?.Invoke(_foregroundApp, _cmdProfile);
+            else if (_foregroundElevated) CommandInElevatedWindow?.Invoke(GetForegroundWindow());
             return _cmdProfile != null;
         }
 
@@ -733,10 +742,15 @@ internal sealed class KeyMapper : IDisposable
     private Profile? ResolveProfile()
     {
         _foregroundApp = "";
+        _foregroundElevated = false;
         GetWindowThreadProcessId(GetForegroundWindow(), out uint pid);
         if (pid == 0) return Profile.Default;
         var (exe, elevated, _) = ProcessFor(pid);
-        if (elevated && !_selfElevated) return null;
+        if (elevated && !_selfElevated)
+        {
+            _foregroundElevated = true;
+            return null;
+        }
         _foregroundApp = exe;
         return exe.Length == 0 ? Profile.Default : _config.ProfileFor(exe);
     }

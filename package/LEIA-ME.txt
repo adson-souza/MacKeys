@@ -1,4 +1,4 @@
-MacKeys 0.4.0 (teste)
+MacKeys 0.4.1 (teste)
 Atalhos do Mac no Windows · Desenvolvido por Adson Pereira de Souza
 
 INSTALAR
