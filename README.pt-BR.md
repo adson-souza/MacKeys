@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/Windows-10_|_11-0078D4?style=for-the-badge&logo=windows&labelColor=000000" alt="Windows 10 e 11">
   <img src="https://img.shields.io/badge/.NET-8-512BD4?style=for-the-badge&logo=dotnet&labelColor=000000" alt=".NET 8">
   <img src="https://img.shields.io/badge/Administrador-não_precisa-34C759?style=for-the-badge&labelColor=000000" alt="Não precisa de administrador">
-  <img src="https://img.shields.io/badge/Idiomas-PT--BR_|_EN-AF52DE?style=for-the-badge&labelColor=000000" alt="Português do Brasil e inglês">
+  <img src="https://img.shields.io/badge/Idiomas-PT--BR_%C2%B7_EN-AF52DE?style=for-the-badge&labelColor=000000" alt="Português do Brasil e inglês">
   <a href="https://github.com/QL-Win/QuickLook">
     <img src="https://img.shields.io/badge/Quick_Look-QuickLook-FF9F0A?style=for-the-badge&labelColor=000000" alt="Quick Look com QuickLook">
   </a>
