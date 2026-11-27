@@ -117,6 +117,9 @@ internal static partial class L
         ["Tecla Win como ⌥ (Option)"] = "Win key as ⌥ (Option)",
         ["Desligado: a tecla Win continua do Windows (encaixar janelas, Iniciar...) e só Win + clique vira Alt. Ligado: Win vira o ⌥ do Mac completo, mas os atalhos de janela do Windows deixam de funcionar."] =
             "Off: the Win key stays Windows' own (snapping windows, Start...) and only Win + click becomes Alt. On: Win becomes the full Mac ⌥, but Windows' window shortcuts stop working.",
+        ["Win vira Alt na hora nos apps criativos"] = "Win becomes Alt right away in creative apps",
+        ["Adobe, Autodesk e outros apps do perfil Criativo: o Win é Alt assim que é apertado, como um remapeamento do PowerToys (duplicar arrastando, redimensionar a partir do centro). Nesses apps, Win + setas não encaixam a janela."] =
+            "Adobe, Autodesk and other Creative-profile apps: Win is Alt as soon as it's pressed, like a PowerToys remap (drag to duplicate, resize from the center). In those apps, Win + arrows don't snap the window.",
         ["Seu teclado"] = "Your keyboard",
         ["Alt e Win da esquerda viram ⌘ e ⌥. O AltGr da direita continua igual, para os acentos e símbolos do ABNT2."] =
             "Left Alt and Win become ⌘ and ⌥. Right Alt (AltGr) stays the same, for accents and symbols.",

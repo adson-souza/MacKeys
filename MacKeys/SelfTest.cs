@@ -19,6 +19,13 @@ internal sealed class SelfTest
     public static bool Active { get; private set; }
 
     private readonly List<string> _seen = new();
+    private readonly List<string> _drags = new(); // modifiers seen while the left button is held
+
+    /// <summary>
+    /// Modifiers as the click message itself carries them (MK_CONTROL in wParam, Alt from GetKeyState while the
+    /// message is handled): what Win32 apps like Illustrator read. WPF's view is more forgiving.
+    /// </summary>
+    private string _clickState = "";
     private readonly List<string> _report = new();
     private int _failures;
 
@@ -54,7 +61,21 @@ internal sealed class SelfTest
             _seen.Add($"{Keyboard.Modifiers}+{(e.ChangedButton == MouseButton.Middle ? "Meio" : "Clique")}");
             e.Handled = true;
         };
+        box.PreviewMouseMove += (_, e) =>
+        {
+            if (e.LeftButton == MouseButtonState.Pressed) _drags.Add(Keyboard.Modifiers.ToString());
+        };
         var window = new Window { Title = "MacKeys autoteste", Width = 420, Height = 160, Content = box, Topmost = true };
+        window.SourceInitialized += (_, _) =>
+        {
+            var source = System.Windows.Interop.HwndSource.FromHwnd(new System.Windows.Interop.WindowInteropHelper(window).Handle);
+            source.AddHook((IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) =>
+            {
+                if (msg == 0x0201) // WM_LBUTTONDOWN
+                    _clickState = $"ctrl={(wParam.ToInt64() & 0x0008) != 0} alt={(GetKeyState(0x12) & 0x8000) != 0}";
+                return IntPtr.Zero;
+            });
+        };
         window.Show();
         window.Activate();
         box.Focus();
@@ -121,10 +142,52 @@ internal sealed class SelfTest
         {
             await Down(Keys.LMenu); await Click(); await Up(Keys.LMenu);
         });
+        Check("⌘+clique: o próprio clique já chega com Ctrl", _clickState.Contains("ctrl=True"), _clickState);
         await Case("Win+clique vira Alt+clique", "Alt+Clique", async () =>
         {
             await Down(Keys.LWin); await Click(); await Up(Keys.LWin);
         });
+        Check("Win+clique: o próprio clique já chega com Alt (duplicar arrastando)", _clickState.Contains("alt=True"), _clickState);
+
+        // 6a. Creative app (like Illustrator): Win is Alt the moment it goes down, before any click.
+        await Down(Keys.LWin);
+        await Task.Delay(100);
+        bool altEarly = LogicallyDown(Keys.Menu), winEarly = LogicallyDown(Keys.LWin);
+        _seen.Clear();
+        await Click();
+        await Up(Keys.LWin);
+        await Task.Delay(300);
+        Check("criativo: Win é Alt antes do clique (como o PowerToys)", altEarly && !winEarly,
+            $"Alt={altEarly} Win={winEarly}");
+        Check("criativo: Win+clique chega como Alt+clique", _seen.Count == 1 && _seen[0] == "Alt+Clique" && _clickState.Contains("alt=True"),
+            $"recebido [{string.Join(" | ", _seen)}] {_clickState}");
+        foreach (var modifier in new[] { Keys.Menu, Keys.LWin })
+            Check($"criativo: {modifier} solto depois", !LogicallyDown(modifier), $"{modifier} preso");
+
+        // 6b. The Mac gesture: grab a handle, then press ⌥ during the drag (scale from the center in Adobe apps).
+        _seen.Clear();
+        _drags.Clear();
+        await MouseEvent(0x0002);                 // left down
+        await MouseEvent(0x0001, dx: 10);         // drag...
+        await Down(Keys.LWin);                    // ...then ⌥
+        _drags.Clear();
+        await MouseEvent(0x0001, dx: 10);
+        await MouseEvent(0x0001, dx: 10);
+        string during = string.Join(" | ", _drags.Distinct());
+        await MouseEvent(0x0004);                 // left up
+        await Up(Keys.LWin);
+        await Task.Delay(600);
+        Check("Win apertado no meio do arraste vira Alt", _drags.Count > 0 && _drags.All(m => m == "Alt"),
+            $"modificadores durante o arraste: [{during}]");
+        foreach (var modifier in new[] { Keys.Menu, Keys.LWin })
+            Check($"depois do arraste: {modifier} solto", !LogicallyDown(modifier), $"{modifier} preso");
+        string afterDrag = ForegroundClass();
+        Check("soltar o Win depois do arraste não abre o Iniciar", afterDrag == "HwndWrapper[MacKeys;;" || afterDrag.StartsWith("HwndWrapper"),
+            $"janela em primeiro plano: {afterDrag}");
+        if (!afterDrag.StartsWith("HwndWrapper")) { await Tap(Keys.Escape); await Task.Delay(800); }
+        window.Activate();
+        SetCursorPos((int)center.X, (int)center.Y);
+        await Task.Delay(300);
 
         // 6c. Middle button: a quick click opens Task View (the app doesn't get it); a drag reaches the app.
         _seen.Clear();

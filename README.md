@@ -16,7 +16,7 @@
 
 <p>
   <a href="https://github.com/adson-souza/MacKeys/releases">
-    <img src="https://img.shields.io/badge/Version-0.5.0-007AFF?style=for-the-badge&labelColor=000000" alt="Version 0.5.0">
+    <img src="https://img.shields.io/github/v/release/adson-souza/MacKeys?style=for-the-badge&label=Version&color=007AFF&labelColor=000000" alt="Latest version">
   </a>
   <img src="https://img.shields.io/badge/Windows-10_|_11-0078D4?style=for-the-badge&logo=windows&labelColor=000000" alt="Windows 10 and 11">
   <img src="https://img.shields.io/badge/.NET-8-512BD4?style=for-the-badge&logo=dotnet&labelColor=000000" alt=".NET 8">
@@ -131,7 +131,7 @@ Right Alt doesn't change, so **AltGr keeps working** for accents and symbols.
 | ⌘⇧3 | Print Screen |
 | ⌘⇧4 / ⌘⇧5 | Snipping Tool (Win+Shift+S) |
 | ⌘⌥Esc | Task Manager |
-| Win + arrows | Stay Windows' own (snap windows, move between displays) |
+| Win + arrows | Stay Windows' own (snap windows, move between displays), except in Creative-profile apps |
 
 Off by default, but available in Settings › Shortcuts: ⌘+arrows (start and end of the line or document) and ⌥+arrows (jump words).
 
@@ -164,7 +164,7 @@ Dragging with the middle button works as usual in every app (panning in Figma, a
 | **Explorer** | File Explorer | Finder shortcuts: ⌘P preview pane, ⌘↑ enclosing folder, ⌘↓ open, ⌘[ ⌘] back/forward, ⌘⌫ Recycle Bin, ⌘I properties, ⌘1–4 view modes |
 | **Document** | Word, PowerPoint | ⌘↑/↓ jump paragraphs |
 | **Spreadsheet** | Excel | ⌘+arrows go to the edge of the data |
-| **Creative** | Photoshop, Illustrator, InDesign, Premiere, After Effects, Revit, AutoCAD, CapCut | ⌘ = Ctrl and Win+key = Alt+key (the ⌥ of Mac shortcuts, including ⌘⌥). ⌘Space becomes Ctrl+Space (zoom) |
+| **Creative** | Photoshop, Illustrator, InDesign, Premiere, After Effects, Revit, AutoCAD, CapCut | ⌘ = Ctrl and Win = Alt the moment it's pressed, like a PowerToys remap: Alt+drag duplicates, Alt while resizing keeps the center, ⌘⌥ works. ⌘Space becomes Ctrl+Space (zoom) |
 | **Off** | Remote Desktop, virtual machines | MacKeys leaves the keyboard alone |
 
 <table>
@@ -223,7 +223,7 @@ MacKeys' Quick Look is **[QuickLook](https://github.com/QL-Win/QuickLook)**, the
 
 ## 📦 Install
 
-Download **`MacKeys-0.5.0-Instalador.exe`** from [Releases](https://github.com/adson-souza/MacKeys/releases) and open it. No administrator and no .NET needed.
+Download **`MacKeys-…-Instalador.exe`** from the [latest release](https://github.com/adson-souza/MacKeys/releases/latest) and open it. No administrator and no .NET needed.
 
 <table>
 <tr>

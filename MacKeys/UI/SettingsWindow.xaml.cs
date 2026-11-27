@@ -76,6 +76,8 @@ public partial class SettingsWindow : Window
         StartupSwitch.IsChecked = Startup.IsEnabled;
         CheatSheetSwitch.IsChecked = Settings.ShowCheatSheet;
         WinOptionSwitch.IsChecked = Settings.WinAsOption;
+        CreativeAltSwitch.IsChecked = Settings.CreativeWinIsAlt;
+        CreativeAltSwitch.IsEnabled = !Settings.WinAsOption; // Win as full ⌥ already covers it
         QuickLookSwitch.IsChecked = Settings.IsOn(ShortcutId.QuickLook);
         AutoUpdateSwitch.IsChecked = Settings.CheckForUpdates;
         PrereleaseSwitch.IsChecked = Settings.IncludePrereleases;
@@ -113,6 +115,14 @@ public partial class SettingsWindow : Window
     {
         App.Current.Mapper.Reset(); // don't leave anything held from the previous mode
         Settings.WinAsOption = WinOptionSwitch.IsChecked == true;
+        Settings.Save();
+        CreativeAltSwitch.IsEnabled = !Settings.WinAsOption;
+    }
+
+    private void CreativeAltSwitch_Click(object sender, RoutedEventArgs e)
+    {
+        App.Current.Mapper.Reset();
+        Settings.CreativeWinIsAlt = CreativeAltSwitch.IsChecked == true;
         Settings.Save();
     }
 

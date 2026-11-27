@@ -150,7 +150,7 @@
                                     </Grid>
                                     <Border Style="{StaticResource RowSeparator}" />
                                     <Grid Margin="14,11">
-                                        <StackPanel Margin="0,0,200,0">
+                                        <StackPanel Margin="0,0,250,0">
                                             <TextBlock Style="{StaticResource RowTitle}" Text="Idioma" />
                                             <TextBlock Style="{StaticResource Secondary}" Text="Automático segue o idioma do Windows: português do Brasil ou inglês." />
                                         </StackPanel>
@@ -171,6 +171,16 @@
                                         </StackPanel>
                                         <CheckBox x:Name="WinOptionSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
                                                   Click="WinOptionSwitch_Click" />
+                                    </Grid>
+                                    <Border Style="{StaticResource RowSeparator}" />
+                                    <Grid Margin="14,11">
+                                        <StackPanel Margin="0,0,56,0">
+                                            <TextBlock Style="{StaticResource RowTitle}" Text="Win vira Alt na hora nos apps criativos" />
+                                            <TextBlock Style="{StaticResource Secondary}"
+                                                       Text="Adobe, Autodesk e outros apps do perfil Criativo: o Win é Alt assim que é apertado, como um remapeamento do PowerToys (duplicar arrastando, redimensionar a partir do centro). Nesses apps, Win + setas não encaixam a janela." />
+                                        </StackPanel>
+                                        <CheckBox x:Name="CreativeAltSwitch" Style="{StaticResource MacSwitch}" HorizontalAlignment="Right"
+                                                  Click="CreativeAltSwitch_Click" />
                                     </Grid>
                                 </StackPanel>
                             </Border>

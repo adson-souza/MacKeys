@@ -46,6 +46,8 @@ internal sealed class KeyMapper : IDisposable
     private bool _optAltHeld;    // injected Alt (⌥+click, ⌥+drag, ⌘⌥ combos, Creative profile)
     private bool _winNative;     // Win passed through untouched (default mode)
     private bool _winConverted;  // ...until we released it and pressed Alt instead (Win+click, Win+key in Adobe apps)
+    private int _buttonsHeld;    // real mouse buttons held right now (bit per button), to spot ⌥ pressed mid-drag
+    private bool _winEager;      // Win became Alt on press (Creative apps, or mid-drag): Windows never saw it
 
     private long _cmdDownAt, _optDownAt;
     private string _foregroundApp = "";
@@ -138,6 +140,8 @@ internal sealed class KeyMapper : IDisposable
         _resentKeys.Clear();
         if (_optWinHeld) { KeyInjector.Up(Keys.LWin); _optWinHeld = false; }
         _cmdDown = _optDown = _winNative = _winConverted = false;
+        _buttonsHeld = 0;
+        _winEager = false;
         _cmdProfile = _optProfile = null;
         _swallowedUps.Clear();
         if (_middleReplayed) SendMiddle(down: false);
@@ -185,6 +189,7 @@ internal sealed class KeyMapper : IDisposable
                 var data = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
                 if (data.dwExtraInfo != KeyInjector.Marker)
                 {
+                    TrackButtons(msg);
                     if (HandleMiddleButton(msg, data)) return (IntPtr)1; // swallow
                     if (msg is WM_LBUTTONDOWN or WM_RBUTTONDOWN or WM_MBUTTONDOWN or WM_XBUTTONDOWN
                         or WM_MOUSEWHEEL or WM_MOUSEHWHEEL)
@@ -432,12 +437,34 @@ internal sealed class KeyMapper : IDisposable
         if (_optDown && _optProfile != null)
         {
             if (!_winNative) return HandleOptCombo(key, _optProfile);
+            if (!IsModifier(key)) _optUsed = true;
             // Win stays Windows' key, except in apps whose Mac versions use ⌥ for shortcuts (Adobe,
             // Autodesk...): there Win + key becomes Alt + key. Arrows stay Win (snapping windows).
             if (_optProfile.Option == OptionMode.Alt && !IsModifier(key) && !IsArrow(key)) ConvertWinToAlt();
         }
         return false;
     }
+
+    private void TrackButtons(int msg)
+    {
+        int bit = msg switch
+        {
+            WM_LBUTTONDOWN or WM_LBUTTONUP => 1,
+            WM_RBUTTONDOWN or WM_RBUTTONUP => 2,
+            WM_MBUTTONDOWN or WM_MBUTTONUP => 4,
+            WM_XBUTTONDOWN or WM_XBUTTONUP => 8,
+            _ => 0,
+        };
+        if (bit == 0) return;
+        if (msg is WM_LBUTTONDOWN or WM_RBUTTONDOWN or WM_MBUTTONDOWN or WM_XBUTTONDOWN) _buttonsHeld |= bit;
+        else _buttonsHeld &= ~bit;
+    }
+
+    /// <summary>
+    /// A mouse button is held (a drag is under way) and modifiers apply to the mouse. On a Mac you grab a
+    /// handle first and press ⌥ during the drag (scale from the center in Illustrator and Photoshop).
+    /// </summary>
+    private bool DraggingWithModifiers => _buttonsHeld != 0 && On(ShortcutId.MouseModifiers);
 
     /// <summary>⌘ + click/drag/scroll → Ctrl, Win(⌥) + click/drag/scroll → Alt, ⌘⌥ → Ctrl+Alt.</summary>
     private void HandleMouse()
@@ -450,6 +477,7 @@ internal sealed class KeyMapper : IDisposable
         }
         else if (_optDown && _optProfile != null)
         {
+            _optUsed = true;
             if (_winNative)
             {
                 ConvertWinToAlt();
@@ -667,6 +695,18 @@ internal sealed class KeyMapper : IDisposable
             _winConverted = false;
             _optUsed = false;
             _optProfile = ResolveProfile();
+            bool dragging = DraggingWithModifiers;
+            bool creative = _config.CreativeWinIsAlt && _optProfile?.Option == OptionMode.Alt;
+            if (_optProfile != null && (dragging || creative))
+            {
+                // Alt right away: ⌥ pressed mid-drag, or an Adobe-style app that must see Alt before the click.
+                // Windows never sees this Win; tapped alone, it still opens Start (on release).
+                _winConverted = _winEager = true;
+                HoldOptAlt();
+                _optUsed = dragging;
+                return true;
+            }
+            _winEager = false;
             return false;
         }
         if (_winNative)
@@ -674,8 +714,10 @@ internal sealed class KeyMapper : IDisposable
             // Once converted, Windows already has Win released: swallow its auto-repeat and its release.
             if (isDown) return _winConverted;
             bool swallow = _winConverted;
-            _optDown = _winNative = _winConverted = false;
+            bool tappedAlone = _winEager && !_optUsed && !_cmdDown;
+            _optDown = _winNative = _winConverted = _winEager = false;
             ReleaseOptAlt();
+            if (tappedAlone) KeyInjector.Tap(Keys.LWin); // Win alone → Start, as usual
             return swallow;
         }
 
@@ -686,6 +728,11 @@ internal sealed class KeyMapper : IDisposable
             _optDownAt = Environment.TickCount64;
             _optUsed = false;
             _optProfile = ResolveProfile();
+            if (_optProfile != null && DraggingWithModifiers)
+            {
+                HoldOptAlt(); // ⌥ pressed mid-drag
+                _optUsed = true;
+            }
             return _optProfile != null;
         }
 

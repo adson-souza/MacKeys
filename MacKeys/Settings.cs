@@ -50,7 +50,11 @@ internal sealed class Settings
     /// <summary>Raised after every save, so the keyboard thread can pick up a fresh <see cref="MapperConfig"/>.</summary>
     public event Action? Saved;
 
-    public MapperConfig Snapshot() => new(DisabledShortcuts, AppProfiles, WinAsOption, CmdSpaceTarget, NativeMiddleClickApps);
+    public MapperConfig Snapshot() =>
+        new(DisabledShortcuts, AppProfiles, WinAsOption, CmdSpaceTarget, NativeMiddleClickApps, CreativeWinIsAlt);
+
+    /// <summary>In Creative-profile apps, Win is Alt from the moment it's pressed (see <see cref="MapperConfig.CreativeWinIsAlt"/>).</summary>
+    public bool CreativeWinIsAlt { get; set; } = true;
 
     /// <summary>
     /// Apps where the middle button stays untouched instead of opening Task View: CAD apps pan, orbit and

@@ -97,6 +97,7 @@ internal static class CheatSheet
         (string, string)? If(bool condition, string keys, string text) => condition ? (keys, text) : null;
         // With Win left to Windows, the ⌥ rows don't apply (only Win + mouse does).
         bool opt = s.WinAsOption;
+        bool snap = opt || !(s.CreativeWinIsAlt && p.Option == OptionMode.Alt); // Win is Alt there: no snapping
         bool on(ShortcutId id) => s.IsOn(id) && (opt || id is not (ShortcutId.WordNavigation or ShortcutId.WordDelete
             or ShortcutId.LockScreen or ShortcutId.ForceQuit));
 
@@ -115,8 +116,8 @@ internal static class CheatSheet
             If(on(ShortcutId.Quit), "⌘ Q", "Fechar o app"),
             If(p.Minimize && on(ShortcutId.Minimize), "⌘ M", "Minimizar"),
             If(on(ShortcutId.ForceQuit), "⌘ ⌥ Esc", "Gerenciador de Tarefas"),
-            If(!opt || !s.IsOn(ShortcutId.WordNavigation), opt ? "⌥ ← → ↑ ↓" : "Win ← → ↑ ↓", "Encaixar a janela"),
-            If(!opt || !s.IsOn(ShortcutId.WordNavigation), opt ? "⌥ ⇧ ← →" : "Win ⇧ ← →", "Mover para o outro monitor"));
+            If(snap && (!opt || !s.IsOn(ShortcutId.WordNavigation)), opt ? "⌥ ← → ↑ ↓" : "Win ← → ↑ ↓", "Encaixar a janela"),
+            If(snap && (!opt || !s.IsOn(ShortcutId.WordNavigation)), opt ? "⌥ ⇧ ← →" : "Win ⇧ ← →", "Mover para o outro monitor"));
 
         bool finder = p.FinderShortcuts && on(ShortcutId.FinderShortcuts);
         Add("Finder",

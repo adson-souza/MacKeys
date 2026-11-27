@@ -16,7 +16,7 @@
 
 <p>
   <a href="https://github.com/adson-souza/MacKeys/releases">
-    <img src="https://img.shields.io/badge/Versão-0.5.0-007AFF?style=for-the-badge&labelColor=000000" alt="Versão 0.5.0">
+    <img src="https://img.shields.io/github/v/release/adson-souza/MacKeys?style=for-the-badge&label=Vers%C3%A3o&color=007AFF&labelColor=000000" alt="Última versão">
   </a>
   <img src="https://img.shields.io/badge/Windows-10_|_11-0078D4?style=for-the-badge&logo=windows&labelColor=000000" alt="Windows 10 e 11">
   <img src="https://img.shields.io/badge/.NET-8-512BD4?style=for-the-badge&logo=dotnet&labelColor=000000" alt=".NET 8">
@@ -131,7 +131,7 @@ O Alt da direita não muda, então o **AltGr continua funcionando no ABNT2**.
 | ⌘⇧3 | Print Screen |
 | ⌘⇧4 / ⌘⇧5 | Ferramenta de Captura (Win+Shift+S) |
 | ⌘⌥Esc | Gerenciador de Tarefas |
-| Win + setas | Continuam do Windows (encaixar janelas, mover entre monitores) |
+| Win + setas | Continuam do Windows (encaixar janelas, mover entre monitores), exceto nos apps do perfil Criativo |
 
 Desligados por padrão, mas disponíveis em Configurações › Atalhos: ⌘+setas (início e fim da linha ou do documento) e ⌥+setas (pular palavras).
 
@@ -164,7 +164,7 @@ Arrastar com o botão do meio continua normal em todos os apps (mover a tela no 
 | **Explorador** | Explorador de Arquivos | Atalhos do Finder: ⌘P painel de visualização, ⌘↑ pasta acima, ⌘↓ abrir, ⌘[ ⌘] voltar/avançar, ⌘⌫ Lixeira, ⌘I propriedades, ⌘1–4 modos de exibição |
 | **Documento** | Word, PowerPoint | ⌘↑/↓ pula parágrafo |
 | **Planilha** | Excel | ⌘+setas vão até a borda dos dados |
-| **Criativo** | Photoshop, Illustrator, InDesign, Premiere, After Effects, Revit, AutoCAD, CapCut | ⌘ = Ctrl e Win+tecla = Alt+tecla (o ⌥ dos atalhos Mac, incluindo ⌘⌥). ⌘Espaço vira Ctrl+Espaço (zoom) |
+| **Criativo** | Photoshop, Illustrator, InDesign, Premiere, After Effects, Revit, AutoCAD, CapCut | ⌘ = Ctrl e Win = Alt assim que é apertado, como um remapeamento do PowerToys: Alt+arrastar duplica, Alt ao redimensionar mantém o centro, ⌘⌥ funciona. ⌘Espaço vira Ctrl+Espaço (zoom) |
 | **Desativado** | Área de Trabalho Remota, máquinas virtuais | O MacKeys não mexe no teclado |
 
 <table>
@@ -223,7 +223,7 @@ O Quick Look do MacKeys é o **[QuickLook](https://github.com/QL-Win/QuickLook)*
 
 ## 📦 Instalar
 
-Baixe o **`MacKeys-0.5.0-Instalador.exe`** em [Releases](https://github.com/adson-souza/MacKeys/releases) e abra. Não precisa de administrador nem de .NET.
+Baixe o **`MacKeys-…-Instalador.exe`** da [versão mais recente](https://github.com/adson-souza/MacKeys/releases/latest) e abra. Não precisa de administrador nem de .NET.
 
 <table>
 <tr>

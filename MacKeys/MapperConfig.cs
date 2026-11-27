@@ -21,8 +21,9 @@ internal sealed class MapperConfig
     private readonly HashSet<string> _nativeMiddleClick;
 
     public MapperConfig(IEnumerable<ShortcutId> disabled, IDictionary<string, string> appProfiles, bool winAsOption,
-        SearchTarget search, IEnumerable<string>? nativeMiddleClickApps = null)
+        SearchTarget search, IEnumerable<string>? nativeMiddleClickApps = null, bool creativeWinIsAlt = true)
     {
+        CreativeWinIsAlt = creativeWinIsAlt;
         _disabled = new HashSet<ShortcutId>(disabled);
         _appProfiles = new Dictionary<string, string>(appProfiles, StringComparer.OrdinalIgnoreCase);
         WinAsOption = winAsOption;
@@ -34,6 +35,12 @@ internal sealed class MapperConfig
     public bool KeepsMiddleClick(string exe) => _nativeMiddleClick.Contains(exe);
 
     public bool WinAsOption { get; }
+
+    /// <summary>
+    /// In Creative-profile apps (Adobe, Autodesk...), Win becomes Alt the moment it's pressed, like a PowerToys
+    /// remap. Those apps follow the keyboard at their own pace and miss an Alt that only appears with the click.
+    /// </summary>
+    public bool CreativeWinIsAlt { get; }
 
     public SearchTarget Search { get; }
 

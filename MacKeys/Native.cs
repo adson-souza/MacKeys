@@ -19,6 +19,9 @@ internal static class Native
     public const int WM_MOUSEHWHEEL = 0x020E;
     public const int WM_MOUSEMOVE = 0x0200;
     public const int WM_MBUTTONUP = 0x0208;
+    public const int WM_LBUTTONUP = 0x0202;
+    public const int WM_RBUTTONUP = 0x0205;
+    public const int WM_XBUTTONUP = 0x020C;
 
     public const uint INPUT_MOUSE = 0;
     public const uint MOUSEEVENTF_MIDDLEDOWN = 0x0020;
@@ -165,6 +168,9 @@ internal static class Native
 
     [DllImport("user32.dll")]
     public static extern short GetAsyncKeyState(int vKey);
+
+    [DllImport("user32.dll")]
+    public static extern short GetKeyState(int vKey);
 
     public static bool IsPhysicallyDown(Keys key) => (GetAsyncKeyState((int)key) & 0x8000) != 0;
 
